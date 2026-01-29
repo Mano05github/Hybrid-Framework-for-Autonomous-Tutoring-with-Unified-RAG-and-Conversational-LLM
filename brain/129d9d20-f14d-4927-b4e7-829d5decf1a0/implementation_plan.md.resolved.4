@@ -1,0 +1,61 @@
+# Implementation Plan - Phase 7b: The Visionary Agent
+
+## Goal Description
+Implement the **Visionary Agent** ("The Eyes") to enable the AI Swarm to "see" and analyze the student's whiteboard drawings. This completes the multimodal triangle (Voice + Text + Vision).
+
+## Proposed Changes
+
+### 1. LLM Engine Enhancements (`backend/llm_engine`)
+Update the Provider Interface and implementations to support Multimodal (Image) input.
+
+#### [MODIFY] `interfaces.py`
+- Add `generate_vision_response(self, prompt: str, image_base64: str, system_instruction: str = None) -> str`
+
+#### [MODIFY] `domain_local/ollama_provider.py`
+- Implement `generate_vision_response` using Ollama's `images` payload parameter.
+- Ensure `model_name` supports vision (or fallback).
+
+#### [MODIFY] `domain_gemini/gemini_provider.py`
+- Implement `generate_vision_response` using Gemini's `inline_data` or `Image` parts.
+
+### 2. Visionary Agent Implementation (`backend/ai_engine`)
+
+#### [NEW] `visionary.py`
+- Class `VisionaryAgent`.
+- **Role**: Analyze diagram/handwriting from the canvas.
+- **Input**: AgentState containing `image_data` (Base64) `canvas_context`.
+- **Logic**:
+    1. Check if `image_data` is present.
+    2. Construct prompt: "Analyze this diagram related to Computer Science..."
+    3. Call `llm.generate_vision_response`.
+    4. Return analysis string.
+
+#### [MODIFY] `graph.py`
+- Add `visionary` node.
+- Update `Supervisor` routing to detect intent: "look at this", "check my drawing", "what is this shape".
+
+#### [MODIFY] `state.py`
+- Add `current_image: str` (Base64) to `AgentState`.
+
+### 3. Frontend Integration (`frontend/components/learning-session`)
+
+#### [MODIFY] `SessionLayout.tsx`
+- Add functionality to capture Canvas snapshot (Base64).
+- Send WebSocket message type: `vision_request`.
+
+#### [MODIFY] `ActiveWhiteboard.tsx`
+- Expoose `getSnapshot()` method via ref (already partially done or needs verification).
+
+## Verification Plan
+
+### Automated Tests
+- None (Visual feature).
+
+### Manual Verification
+1.  **Draw**: Draw a Binary Tree on the whiteboard.
+2.  **Speak/Type**: "Check this diagram. Is it a valid BST?"
+3.  **Observe**:
+    - Frontend sends `vision_request` with Base64.
+    - Router routes to `Visionary`.
+    - Visionary calls Llama 3.2 Vision / Gemini.
+    - AI responds: "Yes, that looks like a BST, but the right child 5 should be greater than root 10."

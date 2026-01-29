@@ -1,0 +1,5 @@
+# Task: Architecture Analysis & Refinement
+
+- [ ] Analyze the provided STEM Architecture Diagram <!-- id: 0 -->
+- [ ] Create `architecture_analysis.md` with detailed feedback and suggestions <!-- id: 1 -->
+- [ ] Update `implementation_plan.md` to align with the new architecture (if approved) <!-- id: 2 -->

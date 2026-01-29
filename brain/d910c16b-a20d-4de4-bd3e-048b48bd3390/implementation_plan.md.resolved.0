@@ -1,0 +1,87 @@
+# Design Review & Implementation Strategy
+
+## Goal
+Transform the current STEM Mentor prototype into a polished, production-grade interface matching the provided designs for:
+1.  **Dashboard**: A data-rich command center.
+2.  **Learning Environment**: An infinite canvas with "Wise Friend" AI integration.
+3.  **Code Editor**: A browser-based IDE.
+
+---
+
+## 1. Dashboard (The Command Center)
+**Status**: [app/page.tsx](file:///d:/final%20year%20project/STEM/frontend/app/page.tsx) exists but is a simple landing page.
+**Target Design**: Sidebar navigation, "Welcome Back" header, Chart (Time Spent), Profile Card, Calendar, Progress Stats.
+
+### Analysis & Suggestions
+-   **Layout Architecture**: The design implies a persistent **Sidebar**. We should move [app/page.tsx](file:///d:/final%20year%20project/STEM/frontend/app/page.tsx) (and other main pages) into a layout that includes this sidebar.
+    -   *Suggestion*: Create `components/Sidebar.tsx` and a `components/DashboardLayout.tsx` wrapper, or use a Route Group `app/(dashboard)/layout.tsx`.
+-   **Visuals**:
+    -   **Chart**: The "Time Spendings" chart requires a charting library.
+        -   *Recommendation*: Use `recharts` or `chart.js` (`react-chartjs-2`). They play well with React and Tailwind.
+    -   **Calendar**: A mini-calendar widget.
+        -   *Recommendation*: `react-calendar` or a custom-styled simple calendar using `date-fns`.
+    -   **Cards**: "Homework Progress", "Course Statistics". These need to be reusable `Card` components.
+    -   **Dark Mode**: The background looks clean white/light gray in some spots but user likely wants a Dark Mode option (or default dark as per current black background preference). *User's dashboard image (Image 0) looks Light Mode, but the Editor/Blackboard (Images 1 & 2) look Dark Mode.*
+        -   *Insight*: We should support **Dark Mode** by default for the STEM focus, but if the Dashboard image is White, clarify if we want that contrast. (Assuming Dark Mode for consistency with STEM/Coding themes usually).
+
+### Implementation Plan
+1.  **Create Sidebar Component**: Navigation links (Dashboard, My Learning, Code Editor, Profile, Notifications).
+2.  **Refactor Dashboard Layout**: Grid system (likely 12-column or CSS Grid) to place the Graph (Left-Heavy) and Profile/Calendar (Right-Rail).
+3.  **Add Components**: `ActivityGraph`, `ProfileCard`, `CalendarWidget`.
+
+---
+
+## 2. Learning Environment (The Infinite Canvas)
+**Status**: [app/blackboard/page.tsx](file:///d:/final%20year%20project/STEM/frontend/app/blackboard/page.tsx) exists with [BlackboardCanvas.tsx](file:///d:/final%20year%20project/STEM/frontend/components/BlackboardCanvas.tsx) (Konva).
+**Target Design**: Infinite canvas, floating toolbar, specific "Assistant" panel.
+
+### Analysis & Suggestions
+-   **Infinite Canvas Logic**:
+    -   The current [BlackboardCanvas.tsx](file:///d:/final%20year%20project/STEM/frontend/components/BlackboardCanvas.tsx) is a fixed stage.
+    -   *Suggestion*: Enable `draggable` on the Konva Stage for panning. Implement wheel listener for Zooming (`scaleX`, `scaleY`). This creates the "Infinite" feel.
+-   **Toolbar**: The user mentioned "tool bar... you can extend".
+    -   *Suggestion*: Create `components/CanvasToolbar.tsx`. A floating bottom-center or side bar with:
+        -   **Tools**: Cursor, Hand (Pan), Pen (Draw), Eraser, Shapes, Text.
+        -   **Math**: A specific button for "Ask AI to Solve".
+-   **AI Interface ("Wise Friend")**:
+    -   Image 1 shows an "ASSISTANT" panel on the left.
+    -   *Recommendation*: Instead of just a floating visualizer, use a **Split-Screen** or **Drawer** approach.
+        -   **Left 25%**: AI Conversation (Chat history + Voice Visualizer).
+        -   **Right 75%**: The Blackboard.
+    -   *Behavior*: The AI should "see" the canvas (we send canvas JSON/Image to multimodal model) and "draw" on it (model returns shapes/text).
+
+### Implementation Plan
+1.  **Enhance Canvas**: Add Zoom/Pan logic.
+2.  **Canvas Toolbar**: Implement the UI and state management for tools.
+3.  **Assistant Panel**: Build the left-hand sidebar for the specific blackboard view.
+
+---
+
+## 3. Code Editor
+**Status**: Missing.
+**Target Design**: VS Code-like environment. File tree (left), Editor (center), Output (right/bottom).
+
+### Analysis & Suggestions
+-   **Core Engine**:
+    -   *Recommendation*: **Monaco Editor** (`@monaco-editor/react`). It IS the VS Code editor, just for the web. It supports syntax highlighting, minimap, etc. out of the box.
+-   **Layout**:
+    -   Standard IDE Layout: Sidebar (Files), Main (Editor), Panel (Terminal/Console).
+-   **Execution**:
+    -   For Python (likely for STEM), we can use:
+        -   **Pyodide** (Client-side Python WASM): Runs python in the browser. Zero backend latency. Ideal for "tutor" feel.
+        -   OR Backend API (Piston / Judge0).
+    -   *Suggestion*: Use **Pyodide** for instant feedback without server setup.
+
+### Implementation Plan
+1.  **New Page**: `app/editor/page.tsx`.
+2.  **Integrate Monaco**: Simple setup for Python/Javascript.
+3.  **Console Component**: A display area for standard output.
+
+---
+
+## Summary of Action
+We will structure the work into **Three Tasks** corresponding to these pages.
+
+1.  **Task 1: The App Shell & Dashboard** (Sidebar, Layout, Stats).
+2.  **Task 2: The Code Editor** (Monaco + Pyodide).
+3.  **Task 3: The Ultimate Blackboard** (Infinite Canvas + Tools + AI Split View).

@@ -1,0 +1,91 @@
+# Multi-Agent Architecture Strategy (The 7-Agent Swarm)
+
+**Strategy**: Decouple "Thinking" (Teacher) from "Knowing" (RAG).
+**Technology**: LangGraph + MCP.
+
+## 📋 The Agent Roster
+
+### 1. 👑 Supervisor Agent (The Brain)
+*   **Role**: Orchestrator & Router.
+*   **Logic**: "User asked about 'Time Complexity'. Is this a conceptual question (Teacher) or a specific fact check (RAG)?"
+*   **Connections**: Talks to ALL agents.
+
+### 2. 👩‍🏫 Teacher Agent (The Pedagogue)
+*   **Role**: Explains concepts, uses analogies, manages the Socratic method.
+*   **Logic**: Does NOT search the DB directly. It asks the **RAG Agent** for facts, then simplifies them for the student.
+*   **Goal**: "Make it understandable."
+
+### 3. 📚 RAG Agent (The Librarian)
+*   **Role**: Retrieval Specialist.
+*   **Logic**: Receives a query -> Searches Vector DB -> Returns raw chunks.
+*   **Note**: *Ingestion is handled offline by the Developer, not by this agent at runtime.*
+*   **Goal**: "Find the exact page in the textbook."
+*   **Tool**: `RAGRetriever`.
+
+### 4. 🧠 Analyst Agent (The Memory)
+*   **Role**: Long-term memory & tracking.
+*   **Logic**: Watches the conversation silently. Updates `UserMasteryModel`.
+*   **Goal**: "Remember that the user failed Recursion 3 times."
+
+### 5. 📝 Examiner Agent (The Quiz Master)
+*   **Role**: Generates tests and evaluates answers.
+*   **Logic**: "Create a hard MCQ about BSTs."
+*   **Goal**: "Verify understanding."
+
+### 6. ❤️ Empath Agent (The Counselor)
+*   **Role**: Emotional Intelligence.
+*   **Logic**: Analyzes Audio Tone + Text Sentiment.
+*   **Goal**: "Detect frustration and alert the Supervisor."
+
+### 7. 👁️ Visionary Agent (The Eyes)
+*   **Role**: Whiteboard Analysis.
+*   **Logic**: Takes screenshot of React-Konva Canvas -> Uses Vision LLM (Gemini 2.0) to interpret diagrams.
+*   **Goal**: "The user drew a cycle in the graph. That's wrong for a Tree."
+
+### 8. 🧠 Adaptive Feedback Agent (The Coach)
+*   **Role**: Meta-Cognitive Strategist (DKT & IRT).
+*   **Logic**: Monitors "Learning Velocity" and "Emotion" to adjust difficulty/strategy.
+*   **Goal**: "Keep the student in the Zone of Proximal Development (ZPD)."
+
+---
+
+## 🔄 The Interaction Flow
+
+![Agent Swarm Architecture](file:///C:/Users/Mano/.gemini/antigravity/brain/129d9d20-f14d-4927-b4e7-829d5decf1a0/agent_swarm_diagram.png)
+
+```mermaid
+graph TD
+    %% Core Inputs
+    User((User Input)) -->|Text/Audio| Supervisor["👑 Supervisor Agent"]
+    
+    %% The "Senses" (Always Active)
+    User -.->|Audio Stream| Empath["❤️ Empath Agent"]
+    Empath -->|Emotional Context| Supervisor
+    
+    User -.->|Canvas Stream| Visionary["👁️ Visionary Agent"]
+    Visionary -->|Visual Context| Supervisor
+    
+    %% The "Memory" (Always Active)
+    Supervisor -->|Update State| Analyst["🧠 Analyst Agent"]
+    Analyst -->|Mastery Profile| Supervisor
+    
+    %% The "Coach" (Strategic Overlay)
+    Analyst -.->|Mastery Vector| Coach["🧠 Adaptive Agent"]
+    Empath -.->|Emotion State| Coach
+    Coach -->|Strategy Adjustment| Supervisor
+
+    %% The "Executors" (Router Decision)
+    Supervisor -->|Conceptual Question| Teacher["👩‍🏫 Teacher Agent"]
+    Supervisor -->|Fact Retrieval| RAG["📚 RAG Agent"]
+    Supervisor -->|Code/Debug| Coder["👨‍💻 Coder Agent"]
+    Supervisor -->|Quiz Time| Examiner["📝 Examiner Agent"]
+    
+    %% Inter-Agent Flows
+    Teacher <-->|Get Facts| RAG
+    Teacher -->|Explanation| Supervisor
+    Coder -->|Execution Result| Supervisor
+    Examiner -->|Test Result| Supervisor
+    
+    %% Output
+    Supervisor -->|Final Response| User
+```

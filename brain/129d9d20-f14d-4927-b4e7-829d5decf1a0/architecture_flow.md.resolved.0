@@ -1,0 +1,87 @@
+# System Architecture & Data Flow
+
+This document visualizes how the **Frontend (Body)** and **Backend (Brain)** integrate to create the "Active Canvas" learning experience.
+
+## High-Level Data Flow
+
+```mermaid
+graph TD
+    subgraph Frontend [Next.js Client]
+        UI[User Interface]
+        Canvas[Active Whiteboard (Konva)]
+        Editor[Code Editor (Monaco)]
+        WS_Client[WebSocket Client hook]
+    end
+
+    subgraph Backend [Django Server]
+        ASGI[Daphne / ASGI]
+        Router[URL Router]
+        Consumer[LearningSessionConsumer]
+        Orchestrator[Session Orchestrator]
+        DB[(PostgreSQL)]
+    end
+
+    subgraph AI_Services [External AI]
+        LLM[OpenAI / Gemini API]
+        RAG[Vector Database]
+    end
+
+    %% User Interaction Flow
+    UI -->|Draws Node| Canvas
+    UI -->|types code| Editor
+    
+    %% Real-time Pipeline
+    Canvas -->|Context Update Event| WS_Client
+    Editor -->|Language Change Event| WS_Client
+    
+    WS_Client <-->|ws://localhost:8000/ws/learn/...| ASGI
+    
+    ASGI --> Router
+    Router --> Consumer
+    
+    %% logic Flow
+    Consumer -->|Update Context| Orchestrator
+    Orchestrator -->|Save State| DB
+    
+    %% AI Decision Loop
+    Orchestrator -->|Get Concept Info| RAG
+    Orchestrator -->|Prompt| LLM
+    LLM -->|Response| Orchestrator
+    
+    %% Feedback Loop
+    Orchestrator -->|AI Action| Consumer
+    Consumer -->|JSON Payload| WS_Client
+    WS_Client -->|Render Chat/Voice| UI
+```
+
+## Detailed Component Interaction
+
+### 1. The "Nervous System" (WebSocket Layer)
+The connection is persistent. Unlike standard web requests, the "Active Canvas" stays connected to the server for the entire session.
+
+*   **Frontend Trigger**: [SessionLayout.tsx](file:///d:/final%20year%20project/V/frontend/components/learning-session/SessionLayout.tsx) initializes the connection on mount.
+*   **Protocol**: JSON over WebSocket.
+*   **Events**:
+    *   `context_update`: User changed language, added a node, or switched tools.
+    *   `ai_response`: The AI wants to speak or show a hint.
+    *   `sync_state`: (Planned) Save/Load the entire canvas state.
+
+### 2. The "Brain" (Orchestrator)
+The [SessionOrchestrator](file:///d:/final%20year%20project/V/backend/learning_session/orchestrator.py#2-39) class ([orchestrator.py](file:///d:/final%20year%20project/V/backend/learning_session/orchestrator.py)) is the decision maker.
+
+*   It maintains a running **Context**:
+    ```json
+    {
+      "topic": "Binary Search Trees",
+      "proficiency": "Beginner",
+      "current_task": "Implement Insert Method",
+      "last_action": "User switched to Python"
+    }
+    ```
+*   It decides **When** to trigger the AI. It filters noise (e.g., doesn't respond to every mouse move) but reacts to significant events (e.g., Code Run Error, Language Switch).
+
+### 3. The Socratic Loop
+1.  **Observe**: User performs an action (e.g., draws a node).
+2.  **Interpret**: Orchestrator updates context.
+3.  **Decide**: Does the user need help? (Sentiment Analysis/Timeout).
+4.  **Act**: Generate a question (LLM) and send it back via WebSocket.

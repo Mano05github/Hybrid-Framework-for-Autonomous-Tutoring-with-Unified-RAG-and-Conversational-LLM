@@ -1,0 +1,70 @@
+# Project Walkthrough & Master Plan
+
+## 1. The Journey So Far (What We Have Built)
+
+We have transformed a simple idea into a **Multi-Agent, Voice-Enabled, Interactive AI Tutor ("Vaathiyar")**.
+
+### **Phase 1-3: The Foundation (Frontend Core)**
+- **Design Language**: Implemented a modern, dark-themed aesthetic with Glassmorphism using Tailwind CSS.
+- **The Dashboard**: A Bento-Grid style learning hub tracking progress, recent modules, and statistics.
+- **The Core Pages**: Landing, Courses, Contact, and Profile pages are fully responsive.
+- **The "Active Canvas"**: Built a unified workspace (`/learn`) merging:
+    - **Interactive Whiteboard** (Konva.js) for drawing/diagrams.
+    - **Code Editor** (Monaco + Pyodide) for execution without a backend server.
+    - **Voice & Chat** Widget for multimodal interaction.
+
+### **Phase 4-5: The Brain (Backend & Orchestration)**
+- **Django Channels**: Established real-time WebSockets for low-latency communication.
+- **Micro-Orchestrator**: A python-based session manager handling audio, text, and code context.
+- **RAG Engine**: Integrated a Vector DB (Chroma) to "read" PDF textbooks and answer consistently.
+- **Tone & Emotion**: The AI detects sentiment (e.g., "Frustrated") and adjusts its persona.
+
+### **Phase 6: The Swarm (Multi-Agent System)**
+We moved from a single LLM to a **Team of Specialists** using `LangGraph`:
+1.  **Supervisor**: The "Manager" who decides which agent should speak next.
+2.  **Teacher ("The Sage")**: Explains concepts using Socratic methods.
+3.  **Coder ("The Engineer")**: Writes, debugs, and explains code snippets.
+4.  **Empath ("The Friend")**: Detects user frustration and offers encouragement.
+5.  **Analyst ("The Auditor")**: Tracks user mastery using an **Elo Rating System**.
+6.  **Examiner ("The Quiz Master")**: Generates unique JSON quizzes based on context.
+
+### **Phase 7: Assessment & Evolution (Recent Work)**
+- **Dynamic Quizzes**: The [Examiner](file:///d:/final%20year%20project/V/backend/ai_engine/examiner.py#9-71) generates questions on the fly using Llama 3.
+- **Assessment UI**: Built a specialized **Split-Screen functionality** (`/quiz`) supporting:
+    - **MCQs**: Multiple choice with explanations.
+    - **Coding Challenges**: "LeetCode-style" coding problems (e.g., "George & Binary Trees").
+- **Persistence**: The System now saves your "Mastery Score" to a database (`mastery_db.json`), creating a permanent memory of your skills.
+
+---
+
+## 2. What is Remaining (The Road Ahead)
+
+We are entering the **Final Frontiers** of the project:
+
+### **Phase 7b: The "Visionary" Agent (The Eyes)**
+> *Status: Planned Next*
+- **Objective**: Give the AI the ability to "see" what you draw on the Whiteboard.
+- **Tech**: Provide Canvas image data (Base64) to a Vision-capable model (Llama 3.2 Vision or Gemini Flash).
+- **Use Case**: You draw a binary tree; the AI says, "That's a nice tree, but the left child should be smaller than the root."
+
+### **Phase 8: The "Adaptive Coach" (Meta-Cognition)**
+> *Status: Pending*
+- **Objective**: An agent that doesn't teach, but *plans*.
+- **Tech**: Uses the **Analyst's** Elo data to recommend the *next best lesson*.
+- **Outcome**: "You struggled with Recursion (Elo 800). Let's review Stack Frames before moving to Graphs."
+
+### **Phase 9: Deployment & Polish**
+> *Status: Pending*
+- **Deployment**: Dockerizing the Swarm for easy hosting.
+- **Auth**: Re-enabling secure user accounts (if required).
+- **Optimization**: Reducing Agent latency.
+
+---
+
+## 3. Current State Summary
+- **Frontend**: ✅ Complete (Dashboard, Editor, Quiz UI, Whiteboard).
+- **Backend (API)**: ✅ Complete (WebSockets, RAG, Django).
+- **AI Core**: ✅ Complete (7-Agent Swarm logic).
+- **Missing Link**: **Vision** (seeing the canvas) and **Automated Learning Paths**.
+
+**Recommended Next Step**: Implement the **Visionary Agent** to complete the multimodal loop (Voice + Text + **Vision**).

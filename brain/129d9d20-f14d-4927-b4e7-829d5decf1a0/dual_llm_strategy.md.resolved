@@ -1,0 +1,66 @@
+# Cost-Optimized Dual LLM Architecture
+
+## 1. The Core Objective: "Credit Savings"
+The primary goal is to **reduce dependency on the Gemini API** to conserve credits. We will introduce a **Local LLM (Mistral)** as the *primary* or *alternative* engine. The system will be designed to keep the paid/quota-limited Gemini engine "aside" — fully functional but inactive unless explicitly enabled.
+
+## 2. Strict Separation Strategy
+To "avoid collisions and confusion" as requested, we will enforce a hard physical separation of the codebases.
+
+### New Directory Structure (`backend/llm_engine/`)
+We will creating a dedicated module for all intelligence logic.
+
+```text
+backend/
+├── learning_session/       # (Unchanged) Business Logic / WebSockets
+│   ├── orchestrator.py     # CONSUMER: Only asks for "response", doesn't care who gives it.
+│
+├── llm_engine/             # [NEW] The Brain Box
+│   ├── __init__.py
+│   ├── factory.py          # THE SWITCH: Reads .env to load ONE provider.
+│   │
+│   ├── core/               # Shared Interfaces
+│   │   └── provider_interface.py  # Abstract Base Class
+│   │
+│   ├── domain_gemini/      # [FOLDER 1] Gemini Implementation
+│   │   └── gemini_provider.py     # Logic moved from ai_service.py
+│   │
+│   └── domain_local/       # [FOLDER 2] Local Implementation
+│       └── mistral_provider.py    # Logic for Ollama/Mistral
+```
+
+**Why this structure?**
+- `domain_gemini` and `domain_local` are completely isolated folders. You can delete one without breaking the other.
+- The `learning_session` (Orchestrator) never imports `gemini` or `mistral` directly. It only talks to the `LLMFactory`.
+
+## 3. The Implementation Plan
+
+### Step 1: Clone & Quarantine
+1.  Create the `backend/llm_engine` structure.
+2.  **Move** the existing Gemini logic ([ai_service.py](file:///d:/final%20year%20project/V/backend/learning_session/ai_service.py)) into `llm_engine/domain_gemini/gemini_provider.py`.
+3.  Delete [ai_service.py](file:///d:/final%20year%20project/V/backend/learning_session/ai_service.py) to ensure no "old" code is running.
+
+### Step 2: The Local Engine (Ollama)
+1.  Implement `llm_engine/domain_local/mistral_provider.py`.
+2.  It will connect to standard Ollama port: `http://localhost:11434`.
+3.  **No complex libraries**: We will use simple HTTP requests to ensure maximum stability and zero overhead.
+
+### Step 3: The Factory Switch
+We will introduce a simple configuration:
+
+```ini
+# .env file
+# VALUES: "local_mistral" | "google_gemini"
+AI_ENGINE_MODE=local_mistral
+```
+
+The Factory will check this variable on startup.
+- If `local_mistral`: It loads **ONLY** the local folder. Gemini code is not even imported.
+- If `google_gemini`: It loads **ONLY** the gemini folder.
+
+## 4. Execution Roadmap
+1.  **Refactor**: Create folders and move Gemini code. (Zero functional change, just organization).
+2.  **Implement Mistral**: Write the local provider code.
+3.  **Switch**: Change [.env](file:///d:/final%20year%20project/V/backend/.env) to `local_mistral` and verify.
+
+## 5. User Prerequisite
+- You must have **Ollama** installed and have run `ollama pull mistral`.

@@ -1,0 +1,773 @@
+/* ===================================
+   DESIGN SYSTEM & VARIABLES
+   =================================== */
+
+:root {
+    /* Colors - Neon & Dark Theme */
+    --color-void: #000000;
+    --color-deep-space: #0a0a0f;
+    --color-neon-blue: #00d4ff;
+    --color-neon-violet: #a855f7;
+    --color-neon-pink: #ec4899;
+    --color-soft-white: #f8fafc;
+    --color-muted-gray: #94a3b8;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, var(--color-neon-blue), var(--color-neon-violet));
+    --gradient-glow: radial-gradient(circle, rgba(0, 212, 255, 0.3), transparent);
+    
+    /* Typography */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Space Grotesk', var(--font-primary);
+    
+    /* Spacing */
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 2rem;
+    --space-lg: 4rem;
+    --space-xl: 6rem;
+    
+    /* Animation */
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-float: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+
+/* ===================================
+   RESET & BASE STYLES
+   =================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: var(--font-primary);
+    background: var(--color-void);
+    color: var(--color-soft-white);
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ===================================
+   SCROLL PROGRESS INDICATOR
+   =================================== */
+
+.scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(0, 212, 255, 0.1);
+    z-index: 1000;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--gradient-primary);
+    width: 0%;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 20px var(--color-neon-blue);
+}
+
+/* ===================================
+   AMBIENT BACKGROUND EFFECTS
+   =================================== */
+
+.ambient-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1; /* Changed from 0 to -1 to stay behind all content */
+    overflow: hidden;
+}
+
+.ambient-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.15;
+    animation: ambientFloat 20s ease-in-out infinite;
+}
+
+.glow-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--color-neon-blue), transparent);
+    top: 10%;
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.glow-2 {
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, var(--color-neon-violet), transparent);
+    top: 50%;
+    right: 10%;
+    animation-delay: 5s;
+}
+
+.glow-3 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, var(--color-neon-pink), transparent);
+    bottom: 20%;
+    left: 50%;
+    animation-delay: 10s;
+}
+
+@keyframes ambientFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(50px, -30px) scale(1.1); }
+    66% { transform: translate(-30px, 40px) scale(0.9); }
+}
+
+/* ===================================
+   SCENE STRUCTURE
+   =================================== */
+
+.scene {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg) var(--space-md);
+    overflow: hidden;
+    z-index: 1; /* Ensure scenes are above ambient layer */
+}
+
+.scene-content {
+    position: relative;
+    width: 100%;
+    max-width: 1400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xl);
+    z-index: 10; /* Increased from 1 to 10 for better layering */
+}
+
+.visual-container {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===================================
+   SCENE TEXT STYLES
+   =================================== */
+
+.scene-text {
+    text-align: center;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 1.2s var(--ease-smooth);
+}
+
+.scene-text.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.whisper-text {
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--color-muted-gray);
+    letter-spacing: 0.3em;
+    text-transform: lowercase;
+    animation: whisper 3s ease-in-out infinite;
+}
+
+@keyframes whisper {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+}
+
+.narrative-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 600;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--space-sm);
+    line-height: 1.2;
+}
+
+.narrative-subtitle {
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    color: var(--color-muted-gray);
+    font-weight: 300;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.narrative-finale {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--space-md);
+    line-height: 1.1;
+}
+
+/* ===================================
+   SCENE 1: THE SYSTEM LISTENS
+   =================================== */
+
+#waveform-canvas {
+    width: 600px;
+    height: 400px;
+    filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.6));
+}
+
+/* ===================================
+   SCENE 2: KNOWLEDGE EXISTS
+   =================================== */
+
+#particles-canvas {
+    width: 100%;
+    height: 600px;
+    max-width: 1000px;
+}
+
+/* ===================================
+   SCENE 3: RETRIEVAL & GROUNDING
+   =================================== */
+
+.waveform-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 60px rgba(0, 212, 255, 0.8),
+                0 0 120px rgba(168, 85, 247, 0.4);
+    animation: corePulse 3s ease-in-out infinite;
+}
+
+@keyframes corePulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+}
+
+.data-streams {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.stream-line {
+    stroke: var(--color-neon-blue);
+    stroke-width: 2;
+    fill: none;
+    opacity: 0.6;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: streamFlow 3s ease-out forwards;
+}
+
+@keyframes streamFlow {
+    to { stroke-dashoffset: 0; }
+}
+
+/* ===================================
+   SCENE 4: CONVERSATIONAL REASONING
+   =================================== */
+
+.reasoning-paths {
+    width: 100%;
+    height: 600px;
+    max-width: 900px;
+}
+
+.reasoning-path {
+    stroke: var(--color-neon-violet);
+    stroke-width: 3;
+    fill: none;
+    opacity: 0.7;
+    stroke-dasharray: 5, 5;
+    animation: pathPulse 2s ease-in-out infinite;
+}
+
+@keyframes pathPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+}
+
+/* ===================================
+   SCENE 5: HYBRID UNIFICATION
+   =================================== */
+
+.flow-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    height: 400px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flow {
+    position: relative;
+    width: 200px;
+    text-align: center;
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 1.5s var(--ease-smooth);
+}
+
+.flow.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.dialogue-flow.visible {
+    transform: translateX(0);
+}
+
+.dialogue-flow {
+    transform: translateX(50px);
+}
+
+.flow-label {
+    font-size: 0.875rem;
+    color: var(--color-muted-gray);
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.flow-visual {
+    width: 100%;
+    height: 150px;
+    border: 2px solid var(--color-neon-blue);
+    border-radius: 12px;
+    background: rgba(0, 212, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.flow-visual::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+    animation: flowShimmer 2s linear infinite;
+}
+
+@keyframes flowShimmer {
+    to { left: 100%; }
+}
+
+.unified-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    transition: transform 1.5s var(--ease-smooth) 0.5s;
+    z-index: 10;
+}
+
+.unified-core.visible {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.core-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.4), transparent);
+    animation: coreGlow 2s ease-in-out infinite;
+}
+
+@keyframes coreGlow {
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* ===================================
+   SCENE 6: THE LEARNER APPEARS
+   =================================== */
+
+.student-container {
+    position: relative;
+    width: 400px;
+    height: 400px;
+}
+
+.student-character {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 1.5s var(--ease-smooth);
+}
+
+.student-character.visible {
+    opacity: 1;
+}
+
+.student-icon {
+    width: 120px;
+    height: 120px;
+    color: var(--color-soft-white);
+    filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.6));
+}
+
+.student-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.3), transparent);
+    border-radius: 50%;
+    animation: studentGlow 3s ease-in-out infinite;
+}
+
+@keyframes studentGlow {
+    0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.orbiting-book {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    transform-origin: center;
+    animation: orbit 8s linear infinite;
+    opacity: 0;
+    transition: opacity 1s var(--ease-smooth) 0.5s;
+}
+
+.orbiting-book.visible {
+    opacity: 1;
+}
+
+@keyframes orbit {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg) translateX(150px) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg) translateX(150px) rotate(-360deg);
+    }
+}
+
+.book-icon {
+    width: 100%;
+    height: 100%;
+    color: var(--color-neon-blue);
+    filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.8));
+}
+
+/* ===================================
+   SCENE 7: AUTONOMOUS TUTORING IN ACTION
+   =================================== */
+
+.tutoring-system {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    height: 600px;
+}
+
+.ai-presence {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ai-waveform {
+    width: 100%;
+    height: 100%;
+    opacity: 0.6;
+    filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.5));
+}
+
+.student-learning {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+}
+
+.student-learning .student-character {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.student-learning .orbiting-book {
+    animation: orbit 6s linear infinite;
+}
+
+.feedback-pulses {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+}
+
+.pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: var(--color-neon-blue);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    animation: feedbackPulse 3s ease-out infinite;
+}
+
+.pulse:nth-child(2) { animation-delay: 1s; }
+.pulse:nth-child(3) { animation-delay: 2s; }
+
+@keyframes feedbackPulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(20);
+        opacity: 0;
+    }
+}
+
+/* ===================================
+   SCENE 8: SCALE & IMPACT
+   =================================== */
+
+.borderless-space {
+    position: relative;
+    width: 100%;
+    height: 600px;
+}
+
+.connection-web {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.global-connections {
+    width: 100%;
+    height: 100%;
+}
+
+.connection-line {
+    stroke: var(--color-neon-blue);
+    stroke-width: 1;
+    opacity: 0.3;
+    stroke-dasharray: 5, 5;
+    animation: connectionFlow 20s linear infinite;
+}
+
+@keyframes connectionFlow {
+    to { stroke-dashoffset: -100; }
+}
+
+.learning-nodes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.node {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: 30px;
+    height: 30px;
+    background: var(--color-neon-violet);
+    border-radius: 50%;
+    box-shadow: 0 0 30px var(--color-neon-violet);
+    animation: nodePulse 2s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 1s var(--ease-smooth);
+}
+
+.node.visible {
+    opacity: 1;
+}
+
+@keyframes nodePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* ===================================
+   CTA BUTTONS
+   =================================== */
+
+.cta-container {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    margin-top: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.cta-button {
+    padding: 1.25rem 3rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    font-family: var(--font-primary);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.4s var(--ease-smooth);
+    background: var(--gradient-primary);
+    color: var(--color-void);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 50px rgba(0, 212, 255, 0.6),
+                0 10px 30px rgba(0, 212, 255, 0.3);
+}
+
+.cta-button.secondary {
+    background: transparent;
+    color: var(--color-soft-white);
+    border: 2px solid var(--color-neon-blue);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.cta-button.secondary:hover {
+    background: rgba(0, 212, 255, 0.1);
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 768px) {
+    .scene {
+        padding: var(--space-md) var(--space-sm);
+    }
+    
+    #waveform-canvas {
+        width: 100%;
+        max-width: 400px;
+        height: 300px;
+    }
+    
+    .student-container,
+    .tutoring-system {
+        width: 100%;
+        max-width: 350px;
+        height: 350px;
+    }
+    
+    .flow-container {
+        flex-direction: column;
+        height: auto;
+        gap: var(--space-lg);
+    }
+    
+    .flow {
+        transform: translateY(-30px);
+    }
+    
+    .flow.visible {
+        transform: translateY(0);
+    }
+    
+    .cta-container {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .cta-button {
+        width: 100%;
+    }
+}
+
+/* ===================================
+   FLOATING ANIMATIONS
+   =================================== */
+
+.float-gentle {
+    animation: floatGentle 6s ease-in-out infinite;
+}
+
+@keyframes floatGentle {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+}
+
+/* ===================================
+   FADE ANIMATIONS
+   =================================== */
+
+.fade-text {
+    opacity: 0;
+    animation: fadeIn 2s ease-in forwards;
+    animation-delay: var(--delay, 0s);
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}

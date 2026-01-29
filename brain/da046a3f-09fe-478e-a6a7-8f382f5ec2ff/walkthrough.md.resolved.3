@@ -1,0 +1,63 @@
+# Backend Setup Walkthrough
+
+## Overview
+We have successfully initialized the backend for the Personal Tutoring Website using Django and PostgreSQL. The foundational apps and API endpoints are in place.
+
+## Features Implemented
+
+### 1. Database Connection
+- Connected to local PostgreSQL database `Vaathi`.
+- Applied migrations for Users and Core models.
+
+### 2. User Authentication
+- **Endpoint**: `/api/users/register/` (POST)
+    - **Validations**:
+        - Password: Min 8 chars, 1 letter, 1 number, 1 special char (`@$!%*#?&`).
+        - Username: Alphanumeric + at least one special char (`@._`).
+    - **Auto-Generation**: Creates a unique [student_id](file:///d:/final%20year%20project/V/backend/users/models.py#20-29) (e.g., `SID-2025-X9A2`).
+- **Endpoint**: `/api/users/login/` (POST)
+    - Supports login matching either **Username** OR **Email**.
+- **Endpoint**: `/api/users/me/` (GET) - Get current user profile.
+- **Model**: Custom [User](file:///d:/final%20year%20project/V/backend/users/models.py#7-32) model with `is_student`, `is_tutor` flags, and [student_id](file:///d:/final%20year%20project/V/backend/users/models.py#20-29).
+
+### 3. Frontend-Backend Integration
+- **API Client**: [frontend/lib/api.ts](file:///d:/final%20year%20project/V/frontend/lib/api.ts) configured for `http://127.0.0.1:8000/api/`.
+- **Pages Connected**:
+    - **Registration**: Connected to `/users/register/`. Handles errors and redirects.
+    - **Login**: Connected to `/users/login/`. Supports Username/Email.
+
+### 4. UI Enhancements
+- **Global Sidebar**:
+    - Accessible via User Avatar button (top-right).
+    - Contains links to Dashboard, Learning, Profile, Settings.
+    - **Conditional Rendering**: Automatically hidden on Login/Register pages using [LayoutWrapper](file:///d:/final%20year%20project/V/frontend/components/LayoutWrapper.tsx#6-19).
+
+### 5. Core Learning Structure
+- **Models**:
+    - [Subject](file:///d:/final%20year%20project/V/backend/core/models.py#4-11): Broad categories (e.g., Programming).
+    - [Topic](file:///d:/final%20year%20project/V/backend/core/models.py#12-23): Specific modules (e.g., Variables).
+    - [Lesson](file:///d:/final%20year%20project/V/backend/core/models.py#24-37): Educational content blocks.
+    - [Quiz](file:///d:/final%20year%20project/V/backend/core/models.py#38-44) & [Question](file:///d:/final%20year%20project/V/backend/core/models.py#45-59): Assessment tools.
+    - [UserProgress](file:///d:/final%20year%20project/V/backend/core/models.py#60-72): Tracks what users have completed.
+- **API Endpoints** (Read-Only/Public):
+    - `/api/core/subjects/`
+    - `/api/core/topics/`
+    - `/api/core/lessons/`
+    - `/api/core/quizzes/`
+- **API Endpoints** (Authenticated):
+    - `/api/core/progress/` (Manage your own progress)
+
+## How to Run
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Run the server:
+   ```bash
+   python manage.py runserver
+   ```
+3. Access the API at `http://localhost:8000/api/core/`
+
+## Next Steps
+- Implement AI Engine integration (OpenAI/Gemini).
+- Set up RAG (Retrieval-Augmented Generation) with `pgvector`.

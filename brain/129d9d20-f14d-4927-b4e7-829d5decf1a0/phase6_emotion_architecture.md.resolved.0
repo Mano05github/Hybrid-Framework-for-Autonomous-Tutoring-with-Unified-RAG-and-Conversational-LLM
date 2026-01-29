@@ -1,0 +1,97 @@
+# Phase 6: The "Sensitive" Tutor - Architecture & Implementation Plan
+
+## 1. Executive Summary
+Phase 6 transforms the system from a "Text-Based Bot" to an "Emotionally Intelligent Listener".
+We are implementing the **"Ear"** (Audio Pipeline) and the **"Amygdala"** (Emotion Engine) of the 7-Pillar Architecture.
+
+**Core Technology Stack:**
+*   **Input**: Web Audio API + MediaRecorder (Frontend).
+*   **Transport**: WebSocket (`bytes` stream).
+*   **Processing**: `librosa` (Feature Extraction).
+*   **Model**: **Hybrid CNN-LSTM** (or Wav2Vec2 as starter).
+
+---
+
+## 2. Detailed Report: How We Use Your Architectures
+
+### A. The "Smart Gating" (Frontend VAD)
+*   **Concept**: We don't want to analyze silence or background noise.
+*   **Implementation**: We will use a **Voice Activity Detector (VAD)** in the browser.
+*   **Logic**:
+    *   *User speaks* -> `VAD Trigger` -> Start Recording.
+    *   *Silence (2s)* -> Stop Recording -> Send Audio Blob.
+*   **Benefit**: Reduces backend load by 80%.
+
+### B. The "Hybrid Feature Extraction" (Backend)
+*   **Concept**: Audio is complex. We need both "Texture" (Timbre) and "Shape" (Tone).
+*   **Implementation**:
+    1.  **MFCCs (Mel-Frequency Cepstral Coefficients)**: Extracted for the LSTM layer. Captures *temporal* modifications (e.g., voice shaking).
+    2.  **Mel-Spectrogram**: Extracted for the CNN layer. Captures *spatial/visual* patterns of sound frequencies.
+
+### C. The "Emotion State Update" (Orchestrator)
+*   **Concept**: Emotion is not just a label; it's a context variable.
+*   **Implementation**:
+    *   When `Model` predicts `Frustration` (Confidence > 80%):
+    *   [SessionOrchestrator](file:///d:/final%20year%20project/V/backend/learning_session/orchestrator.py#6-54) updates `context['emotion'] = 'frustrated'`.
+    *   **Action**: The System Prompt automatically shifts to "Supportive/Encouraging" mode.
+
+---
+
+## 3. The Perfect Flow Diagram (Phase 6)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Mic as Client Mic (VAD)
+    participant WS as WebSocket Consumer
+    participant Feature as Feature Extractor (Librosa)
+    participant Model as Emotion Model (CNN-LSTM)
+    participant Brain as Session Orchestrator
+
+    Note over User, Mic: The "Listening" Loop
+
+    User->>Mic: Speaks ("I don't understand this!")
+    Mic->>Mic: VAD detects speech activity
+    Mic->>Mic: Buffers Audio (Blob)
+    Mic->>Mic: Silence detected (End of Turn)
+    
+    Mic->>WS: Sends Audio Blob (Binary)
+    
+    Note over WS, Model: The "Processing" Loop (Backend)
+
+    WS->>WS: Saves temp file (speech.wav)
+    WS->>Feature: Extract Features(speech.wav)
+    
+    par Parallel Features
+        Feature->>Model: Stream A: MFCCs (for LSTM)
+        Feature->>Model: Stream B: Mel-Spectrogram (for CNN)
+    end
+
+    Model->>Model: Forward Pass (Fusion Layer)
+    Model-->>WS: Returns Label: "FRUSTRATED" (92%)
+
+    Note over WS, Brain: The "Context" Loop
+
+    WS->>Brain: update_context("emotion", "frustrated")
+    Brain->>Brain: Adjust System Prompt ("Be supportive")
+    Brain->>WS: Ack (Emotion Registered)
+```
+
+## 4. Implementation Steps
+
+### Step 1: The "Ears" (Frontend)
+*   Create `useAudioRecorder` hook.
+*   Implement `MediaRecorder` logic.
+*   Add Visualizer (The 4 dots reacting to volume).
+
+### Step 2: The "Nerves" (Transport)
+*   Update [consumers.py](file:///d:/final%20year%20project/V/backend/learning_session/consumers.py) to handle `bytes` (binary) data.
+*   Ensure it differentiates between "Text Message" and "Audio Blob".
+
+### Step 3: The "Brain" (Model)
+*   Install `librosa`, `torch`, `transformers`.
+*   Create `EmotionService` class (similar to [AIService](file:///d:/final%20year%20project/V/backend/learning_session/ai_service.py#8-36)).
+*   Load the pre-trained model.
+
+### Step 4: The "Connection" (Integration)
+*   Connect the loop: Speak -> Detect -> Update UI.

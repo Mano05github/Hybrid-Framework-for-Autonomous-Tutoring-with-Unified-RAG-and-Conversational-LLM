@@ -1,0 +1,56 @@
+# Active Canvas Implementation Plan
+
+**Goal**: Transform the distinct "Chat" and "Editor" pages into a unified **Active Learning Environment** (`/learn`) where the Whiteboard is the primary interface.
+
+## User Review Required
+> [!IMPORTANT]
+> This is a major structural change. The existing "Chat-Only" interface in `/learn` will be completely replaced by the new Split-View layout.
+
+## Proposed Changes
+
+### 1. New Components
+#### [NEW] [ActiveWhiteboard.tsx](file:///d:/final%20year%20project/V/frontend/components/learning-session/ActiveWhiteboard.tsx)
+-   **Tech**: `react-konva`
+-   **Features**:
+    -   Infinite Canvas (Grid background).
+    -   Draggable Nodes (Circles/Rectangles representing concepts).
+    -   Connection Lines (between nodes).
+    -   "AI Cursor" (visual indicator of where the AI is pointing).
+
+#### [NEW] [EmbeddedCodeEditor.tsx](file:///d:/final%20year%20project/V/frontend/components/learning-session/EmbeddedCodeEditor.tsx)
+-   **Tech**: `@monaco-editor/react`
+-   **Features**:
+    -   Stripped down version of `/editor` page.
+    -   Props for `code` and `onChange` to be controlled by the parent lesson state.
+
+#### [NEW] [SessionLayout.tsx](file:///d:/final%20year%20project/V/frontend/components/learning-session/SessionLayout.tsx)
+-   **Structure**:
+    -   **Main**: `ActiveWhiteboard` (60-70% width).
+    -   **Side Panel**: Tabbed view for **Chat** and **Code Editor**.
+    -   **Overlay**: **Floating Agent Widget** (Draggable “Dynamic Island” style visualizer showing Listening/Speaking states).
+
+### 2. Page Refactoring
+#### [MODIFY] [app/learn/page.tsx](file:///d:/final%20year%20project/V/frontend/app/learn/page.tsx)
+-   **Action**: Replace the current "Chat List" layout.
+-   **New Flow**:
+    1.  Load `SessionLayout`.
+    2.  Initialize `ActiveWhiteboard` with an empty state.
+    3.  Connect Voice Agent state to the visualizer.
+
+### 3. State Management
+-   Need a unified session state:
+    ```typescript
+    interface SessionState {
+        mode: 'teaching' | 'coding' | 'drawing';
+        canvasElements: CanvasNode[];
+        currentCode: string;
+        chatHistory: Message[];
+    }
+    ```
+
+## Verification Plan
+### Manual Verification
+1.  **Canvas Interaction**: Verify I can drag a shape on the new whiteboard.
+2.  **Layout**: Ensure the Split-View resizes correctly on desktop.
+3.  **Editor**: Ensure code typing works in the embedded panel.
+4.  **Legacy**: Ensure `/dashboard` still links correctly to this new `/learn` page.

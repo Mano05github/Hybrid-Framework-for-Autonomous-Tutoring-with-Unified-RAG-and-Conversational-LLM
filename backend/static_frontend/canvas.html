@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas - Vaathiyar</title>
+    <link rel="stylesheet" href="/static/css/shared-learning.css">
+    <link rel="stylesheet" href="/static/css/canvas.css">
+    
+    <!-- Auth Guard (must load first) -->
+    <script src="/static/js/auth-guard.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/websocket-client.js"></script>
+    <script>
+        // Check authentication before page loads
+        (async () => {
+            const isAuthenticated = await AuthGuard.checkAuth();
+            if (!isAuthenticated) return;
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/shared-learning.css">
+    <link rel="stylesheet" href="/static/css/canvas.css">
+</head>
+<body>
+    <!-- Floating Particles Background -->
+    <canvas id="particles-bg"></canvas>
+    
+    <!-- Ambient Glow Effects -->
+    <div class="ambient-layer">
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="top-nav">
+        <span class="brand">Vaathiyar</span>
+        <div class="nav-actions">
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- Main Page Container -->
+    <div class="page-container">
+        <div class="split-layout">
+            
+            <!-- Voice Panel -->
+            <div class="voice-panel">
+                <button class="toggle-panel-btn" title="Toggle voice panel">◀</button>
+                <div class="waveform-container">
+                    <canvas id="waveform-canvas"></canvas>
+                </div>
+                <p class="status-text">Listening...</p>
+                <div class="voice-input-container">
+                    <input type="text" class="voice-input" placeholder="Type your message...">
+                    <button class="voice-btn">🎤</button>
+                </div>
+            </div>
+
+            <!-- Canvas Content -->
+            <div class="content-area canvas-container">
+                
+                <!-- Canvas Header -->
+                <div class="canvas-header">
+                    <h1 class="canvas-title">Whiteboard</h1>
+                    <div class="canvas-actions">
+                        <button class="action-btn" id="exportBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export PNG
+                        </button>
+                        <button class="action-btn" id="clearBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Clear Canvas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Floating Toolbar -->
+                <div class="floating-toolbar" id="floatingToolbar">
+                    <div class="toolbar-handle">⋮⋮</div>
+                    
+                    <button class="tool-btn active" data-tool="pen" title="Pen (P)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                            <path d="M2 2l7.586 7.586"></path>
+                        </svg>
+                        <span>Pen</span>
+                    </button>
+                    
+                    <button class="tool-btn" data-tool="eraser" title="Eraser (E)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 20H7L3 16l5-5 7 7 5-5 3 3-3 4z"></path>
+                            <path d="M7 20l3-3"></path>
+                        </svg>
+                        <span>Eraser</span>
+                    </button>
+                    
+                    <button class="tool-btn" data-tool="shapes" title="Shapes (S)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        </svg>
+                        <span>Shapes</span>
+                    </button>
+                    
+                    <div class="tool-divider"></div>
+                    
+                    <div class="color-picker-container">
+                        <input type="color" id="colorPicker" value="#00d4ff" title="Color">
+                        <span class="color-label">Color</span>
+                    </div>
+                    
+                    <div class="thickness-container">
+                        <label for="thicknessSlider">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <line x1="4" y1="12" x2="20" y2="12"></line>
+                            </svg>
+                        </label>
+                        <input type="range" id="thicknessSlider" min="1" max="20" value="3" title="Thickness">
+                        <span class="thickness-value" id="thicknessValue">3px</span>
+                    </div>
+                    
+                    <div class="tool-divider"></div>
+                    
+                    <button class="tool-btn" id="undoBtn" title="Undo (Ctrl+Z)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        <span>Undo</span>
+                    </button>
+                    
+                    <button class="tool-btn" id="redoBtn" title="Redo (Ctrl+Y)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        <span>Redo</span>
+                    </button>
+                </div>
+
+                <!-- Canvas Area -->
+                <div class="canvas-wrapper">
+                    <canvas id="drawingCanvas"></canvas>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/websocket-client.js"></script>
+    <script src="/static/js/shared-utils.js"></script>
+    <script src="/static/js/canvas.js"></script>
+</body>
+</html>

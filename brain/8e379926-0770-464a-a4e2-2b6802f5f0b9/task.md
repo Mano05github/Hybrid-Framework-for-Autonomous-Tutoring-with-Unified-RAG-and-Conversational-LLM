@@ -1,0 +1,19 @@
+# SHG Member Photo Automation Fix
+
+- [x] Debug member loop failure <!-- id: 0 -->
+    - [x] Analyze `main.py` for loop logic <!-- id: 1 -->
+    - [x] Analyze `browser_handler.py` for navigation and element retrieval <!-- id: 2 -->
+    - [x] Fix the stale element or navigation issue <!-- id: 3 -->
+- [x] Improve Image Processing <!-- id: 5 -->
+    - [x] Implement face detection and cropping (Head & Shoulders) <!-- id: 6 -->
+- [x] Handle Missing Right-Side Image <!-- id: 7 -->
+    - [x] Update `browser_handler.py` to extract name and enforce strict button check <!-- id: 8 -->
+    - [x] Update `main.py` to skip member if member missing <!-- id: 9 -->
+- [x] Handle Missing Right-Side Image <!-- id: 7 -->
+    - [x] Update `browser_handler.py` to extract name and enforce strict button check <!-- id: 8 -->
+    - [x] Update `main.py` to skip member if member missing <!-- id: 9 -->
+- [x] Robust Processing & Checkboxes <!-- id: 10 -->
+    - [x] Add `find_next_unprocessed_member_index` to `browser_handler.py` <!-- id: 11 -->
+    - [x] Update `upload_image` for multi-checkbox support and delays <!-- id: 12 -->
+    - [x] Refactor `main.py` loop to use processed set strategy <!-- id: 13 -->
+- [ ] Verify fix with user <!-- id: 4 -->

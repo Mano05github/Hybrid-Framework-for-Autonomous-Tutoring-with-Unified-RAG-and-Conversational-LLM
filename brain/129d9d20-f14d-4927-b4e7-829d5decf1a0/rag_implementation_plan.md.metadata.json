@@ -1,0 +1,5 @@
+{
+  "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary":  "Detailed plan for Local RAG architecture using ChromaDB and LangChain.",
+  "updatedAt":  "2026-01-09T15:11:17.174004600Z"
+}

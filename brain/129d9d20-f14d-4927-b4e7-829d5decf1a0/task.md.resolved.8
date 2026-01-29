@@ -1,0 +1,60 @@
+# Redesign Task List
+
+- [/] Analyze current frontend structure <!-- id: 0 -->
+- [ ] Create Implementation Plan <!-- id: 1 -->
+    - [ ] Define global theme (colors, fonts) <!-- id: 2 -->
+    - [ ] Plan Landing Page changes <!-- id: 3 -->
+    - [ ] Plan Courses Page changes <!-- id: 4 -->
+    - [ ] Plan Contact Page changes <!-- id: 5 -->
+    - [ ] Plan Blog Page changes <!-- id: 6 -->
+- [ ] User Review & Approval <!-- id: 7 -->
+- [/] Execute Redesign <!-- id: 8 -->
+    - [x] Setup Global Styles/Theme <!-- id: 9 -->
+    - [x] Implement Landing Page <!-- id: 10 -->
+    - [x] Implement Courses Page <!-- id: 11 -->
+    - [x] Implement Contact Page <!-- id: 12 -->
+    - [x] Implement Blog Page <!-- id: 13 -->
+    - [x] Dashboard Redesign (Layout & Stats reset) <!-- id: 15 -->
+    - [x] Dynamic Dashboard Calendar <!-- id: 16 -->
+    - [x] Code Editor Theme Update <!-- id: 17 -->
+- [x] Verification <!-- id: 14 -->
+- [x] **Phase 2: Active Canvas Transformation** <!-- id: 18 -->
+    - [x] Create [ActiveWhiteboard](file:///d:/final%20year%20project/V/frontend/components/learning-session/ActiveWhiteboard.tsx#30-404) Component (react-konva) <!-- id: 19 -->
+    - [x] Extract [CodeEditor](file:///d:/final%20year%20project/V/frontend/app/editor/page.tsx#14-162) Component <!-- id: 20 -->
+    - [x] Implement Split-Pane Layout in `/learn` <!-- id: 21 -->
+    - [x] Integrate Voice & Chat as Sidebars <!-- id: 22 -->
+    - [x] Connect Canvas to "System Prompt" (Stub - Moved to Phase 4) <!-- id: 23 -->
+    - [x] Implement Multi-Language Editor <!-- id: 24 -->
+
+- [x] **Phase 4: Backend & AI Integration**
+    - [x] **Backend Assessment & Setup**
+        - [x] Analyze existing `backend` directory
+        - [x] Setup/Verify Django Environment
+        - [x] Verify/Install `channels` for WebSockets
+    - [x] **Real-time Communication**
+        - [x] Create `LearningConsumer` (ASGI)
+        - [x] Establish WebSocket connection in Frontend ([SessionLayout](file:///d:/final%20year%20project/V/frontend/components/learning-session/SessionLayout.tsx#119-269))
+    - [x] **AI "Socratic" Integrated**
+        - [x] Connect OpenAI/Gemini API (Updated to `google-genai` SDK)
+        - [x] Build Context Manager (Canvas + Code State)
+        - [x] Implement Sentiment Analysis (Basic Stub/AI logic implemented)
+
+- [ ] **Phase 5: Code Execution Engine**
+    - [ ] **Strategy Selection**: Choose safe execution method (Client-side Pyodide vs Server-side Piston/Docker).
+    - [ ] **Implementation**: Connect "Run" button to execution logic.
+    - [ ] **Output Display**: Show stdout/stderr in the Editor console.
+
+- [ ] **Phase 6: The "Sensitive" Tutor (Emotion)**
+    - [ ] Implement Audio Feature Extraction (Librosa).
+    - [ ] Integrate Pre-trained Wav2Vec2/CNN-LSTM Model.
+    - [ ] Create "Smart Gating" for Voice Activity.
+
+- [ ] **Phase 7: The "Smart" Tutor (Knowledge)**
+    - [ ] Design Database for Knowledge Tracing (DKT).
+    - [ ] Implement ECDG-DST (Dialogue State Tracking).
+    - [ ] Build Concept Dependency Graph (GAT).
+
+- [ ] **Phase 8: The "Adaptive" Tutor (RL & Cognitive)**
+    - [ ] Implement Cognitive Load Estimation (Behavioral metrics).
+    - [ ] Train/Deploy DQN for Path Optimization.
+    - [ ] Full "Closed-Loop" Integration.

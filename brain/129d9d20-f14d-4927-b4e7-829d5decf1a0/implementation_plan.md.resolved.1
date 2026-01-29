@@ -1,0 +1,77 @@
+# WebUni Design Implementation Plan
+
+This plan outlines the steps to redesign the public-facing pages of the application to match the "WebUni" template style provided in the screenshots. Use common "WebUni" template aesthetics (Clean, Red/White/Dark theme, Top Navigation).
+
+## User Review Required
+- **Navigation Structure**: The current app uses a Sidebar. I propose using a Top Header for the public pages (Home, Courses, Blog, Contact) and keeping the Sidebar for the Dashboard/App pages.
+- **Assets**: I will use placeholders for images. The user might need to provide specific logos or banner images later.
+
+## Proposed Changes
+
+### Global & Layout
+#### [MODIFY] [globals.css](file:///d:/final%20year%20project/V/frontend/app/globals.css)
+- Ensure all template utility classes (e.g., `.spad`, `.site-btn`, `.section-title`) are present.
+- Add specific styles for the Header and Footer.
+
+#### [NEW] [Header.tsx](file:///d:/final%20year%20project/V/frontend/components/Header.tsx)
+- Implementation of the top navigation bar.
+- Links: Home, Courses, Blog, Contact.
+- Action: Login/Register buttons.
+
+#### [NEW] [Footer.tsx](file:///d:/final%20year%20project/V/frontend/components/Footer.tsx)
+- 4-column layout: About, Useful Links, Recent Posts/newsletter, Contact Info.
+
+#### [MODIFY] [LayoutWrapper.tsx](file:///d:/final%20year%20project/V/frontend/components/LayoutWrapper.tsx)
+- Logic update: 
+    - **Public Routes** (`/`, `/courses`, `/contact`, `/blog`, `/auth/*`): Show `Header` and `Footer`.
+    - **App Routes** (`/dashboard`, `/learn`, `/profile`, `/settings`, etc.): Show **Fixed Left Sidebar**.
+
+#### [MODIFY] [Sidebar.tsx](file:///d:/final%20year%20project/V/frontend/components/Sidebar.tsx)
+- Change from "Overlay/Toggle" style to "Fixed/Open" style on desktop.
+- Ensure it consumes the left side of the screen (e.g., `w-64`) and pushes content to the right.
+- Maintain the "App Pages" links (Dashboard, My Learning, Profile, Settings).
+
+### Pages
+
+#### [MODIFY] [Home Page](file:///d:/final%20year%20project/V/frontend/app/page.tsx)
+- **Hero Section**: Background image, "Get The Best Free Online Courses", Search Bar (Name/Category).
+- **Categories**: 4 column grid of course categories.
+- **Featured Courses**: Carousel or Grid of top courses.
+- **Join Community**: Call to action section.
+
+#### [NEW] [Courses Page](file:///d:/final%20year%20project/V/frontend/app/courses/page.tsx)
+- **Banner**: "Courses" title with breadcrumb.
+- **Search/Filter**: Search bar and category filter.
+- **Grid**: Course cards (Image, Title, Instructor, Students count, Rating, Price/Free).
+
+#### [NEW] [Contact Page](file:///d:/final%20year%20project/V/frontend/app/contact/page.tsx)
+- **Banner**: "Contact" title.
+- **Map Section**: Visual placeholder for Google Map.
+- **Split Layout**: Contact Form (Left) & Contact Info (Right - Address, Phone, Email).
+
+#### [NEW] [Blog Page](file:///d:/final%20year%20project/V/frontend/app/blog/page.tsx)
+- **Banner**: "Blog" or "News" title.
+- **Main Layout**:
+    - **Left**: Blog Posts List (Image, Title, Meta, Excerpt, Read More).
+    - **Right**: Sidebar (Search, Categories, Recent Posts, Tags).
+
+### Components
+
+#### [NEW] [PageBanner.tsx](file:///d:/final%20year%20project/V/frontend/components/PageBanner.tsx)
+- Reusable component for the top banner on Courses, Contact, and Blog pages.
+- Props: Title, Breadcrumb image.
+
+#### [NEW] [CourseCard.tsx](file:///d:/final%20year%20project/V/frontend/components/CourseCard.tsx)
+- Reusable card for listing courses.
+
+## Verification Plan
+
+### Automated Tests
+- Build verification: `npm run build`.
+
+### Manual Verification
+- Navigate to `/` and check the landing page layout.
+- Click "Courses" in header -> Verify `/courses`.
+- Click "Contact" in header -> Verify `/contact`.
+- Click "Blog" in header -> Verify `/blog`.
+- Verify Dashboard (`/dashboard`) still loads with Sidebar (no Header/Footer).

@@ -1,0 +1,117 @@
+# Advanced RAG Strategy: The "Omni-RAG" Architecture
+
+## 1. Executive Summary
+You requested a fusion of **13 advanced RAG methodologies** (Self, Corrective, Adaptive, Iterative, etc.). Instead of implementing them as isolated modules, we will synthesize them into a **Single Coherent Multi-Agent RAG Pipeline**.
+
+We call this architecture **"The Librarian Swarm"**.
+
+---
+
+## 2. Core Architecture: The "Router-Critic-Solver" Loop
+
+The system does not just "search and answer"; it **navigates** knowledge.
+
+### The Flow (Mermaid Diagram)
+```mermaid
+graph TD
+    UserQuery --> Router{Adaptive Router}
+    
+    %% Branch 1: Simple Queries
+    Router -- "Simple/Fact" --> DirectLLM[Direct / Memo]
+    
+    %% Branch 2: Complex Queries (The RAG Loop)
+    Router -- "Unknown/Complex" --> HybridSearch[Hybrid Search]
+    
+    subgraph "Retrieval Engine"
+        HybridSearch --> VectorDB[(Vector Search)]
+        HybridSearch --> KeywordDB[(BM25 Search)]
+        VectorDB & KeywordDB --> ReRanker[Cross-Encoder Reranker]
+        ReRanker --> ContextComp[Context Compression]
+    end
+    
+    subgraph "Reasoning Engine"
+        ContextComp --> Generator[LLM Generator]
+        Generator --> SelfCritic{Self-Correction}
+        
+        %% Self-Correction Loop
+        SelfCritic -- "Hallucination Detected" --> CRAG[Corrective RAG (Web Search)]
+        SelfCritic -- "Missing Info" --> Iterative[Iterative Query Expansion]
+        Iterative --> HybridSearch
+        
+        %% Success
+        SelfCritic -- "Valid" --> FinalResponse
+    end
+    
+    %% Personalized Layer
+    FinalResponse --> Personalized[Personalization Filter]
+    Personalized --> Output
+```
+
+---
+
+## 3. Integration of Methodologies
+
+### A. The Retrieval Layer (Getting Data)
+1.  **Hybrid RAG**: We combine **Dense Vector Search** (Semantic) with **BM25** (Keyword).
+    *   *Why*: Vectors miss exact acronyms; Keywords miss context. Together they are robust.
+2.  **Federated RAG**: We perform parallel searches across:
+    *   *Local Docs*: PDF/Textbooks.
+    *   *Web*: Real-time updates (via tool augmentation).
+    *   *Codebase*: Repository search.
+3.  **Re-ranking RAG**: The top 50 results from Hybrid Search are passed to a **Cross-Encoder Model** (e.g., `bge-reranker`).
+    *   *Benefit*: Drastically improves precision by scoring relation, not just similarity.
+4.  **Contextual Compression**: Instead of feeding full documents, an LLM extracts only the *relevant sentences* from the top 5 chunks.
+    *   *Benefit*: Reduces noise and token cost.
+
+### B. The Orchestration Layer (Managing Logic)
+5.  **Adaptive RAG (The Router)**: A lightweight classifier (Supervisor Agent) decides:
+    *   *No RAG*: "Hello" -> Direct Reply.
+    *   *Single-Hop*: "What is a Tree?" -> Standard RAG.
+    *   *Multi-Hop*: "Compare Tree vs Graph memory usage" -> Iterative RAG.
+6.  **Iterative RAG**: If the query is complex, the "Analyst Agent" breaks it down:
+    *   Step 1: "Get memory usage of Tree."
+    *   Step 2: "Get memory usage of Graph."
+    *   Step 3: Synthesize comparison.
+7.  **Temporal RAG**: Metadata includes `timestamp`. The RAG prioritizes *recent* documents for current events (e.g., "Latest React features") vs *canonical* docs for foundational theory.
+
+### C. The Quality Layer (Ensuring Truth)
+8.  **Self-RAG (Reflection)**: The LLM generates special tokens `[IsRelevant]`, `[IsSupported]`, `[IsUseful]` for each sentence.
+9.  **Corrective RAG (CRAG)**: If Self-RAG flags `[NotSupported]`:
+    *   The system discards the document.
+    *   It triggers a **Web Search** tool to find the missing truth.
+    *   It re-generates the answer.
+
+### D. The User Layer (Experience)
+10. **Personalized RAG**: The prompt is injected with the `StudentProfile` (from Phase 8).
+    *   *Example*: If User is "Visual Learner", RAG prioritizes documents with "Diagram" tags.
+11. **Streaming RAG**: Tokens are sent to the frontend immediately, even while the "Critic" is verifying (optimistic UI), or we stream the "Thought Process" (DeepSeek style).
+
+---
+
+## 4. Efficiency & Trade-offs
+
+| Strategy | Pros | Cons | Efficiency Impact |
+| :--- | :--- | :--- | :--- |
+| **Hybrid + Re-ranking** | Extremely high accuracy. | High latency (2x slower). | Medium (Reranker is heavy). |
+| **CRAG (Corrective)** | Eliminates hallucinations. | Can loop indefinitely if info is missing. | Low (Web search is slow). |
+| **Context Compression** | "Needle in haystack" precision. | Loss of surrounding context. | High (Reduces LLM tokens). |
+| **Adaptive Router** | Best of all worlds. | Needs training/tuning the router. | **Very High** (Skips RAG often). |
+
+---
+
+## 5. Implementation Strategy (Phase 9)
+
+**Step 1: The "Librarian" Upgrade**
+*   Upgrade [RAGRetriever](file:///d:/final%20year%20project/V/backend/rag_system/retriever.py#11-50) to use `EnsembleRetriever` (LangChain) for Hybrid Search.
+*   Add a local **Re-ranker** (e.g., standard `HuggingFaceCrossEncoder`).
+
+**Step 2: The Critic Loop**
+*   Implement `check_hallucination` node in the Graph.
+*   If check fails -> Route to `WebSearchTool`.
+
+**Step 3: Personalization**
+*   Inject `StudentProfile` vector into the search query (Metadata Filtering).
+
+## 6. Conclusion
+We will build a **Hybrid, Adaptive, Corrective RAG System**.
+It starts fast (Adaptive), tries hard (Hybrid), doubles-checks itself (CRAG/Self-RAG), and learns from you (Personalized).

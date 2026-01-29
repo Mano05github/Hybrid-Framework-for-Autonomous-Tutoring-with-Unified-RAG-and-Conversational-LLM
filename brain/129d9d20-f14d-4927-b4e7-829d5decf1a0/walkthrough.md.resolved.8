@@ -1,0 +1,52 @@
+# System Walkthrough (Current State)
+
+This guide explains how to run and test the current "Phase 5+" version of the AI Tutor.
+
+## 1. Starting the System
+You need two terminals running.
+
+**Terminal 1: The Brain (Backend)**
+```powershell
+cd backend
+python manage.py runserver
+```
+*Wait for "Starting ASGI/Daphne..."*
+
+**Terminal 2: The Face (Frontend)**
+```powershell
+cd frontend
+npm run dev
+```
+*Open `http://localhost:3000/learn` in your browser.*
+
+## 2. Testing the "Expert Brain" (RAG)
+The AI now has access to your PDFs.
+
+1.  **Ingest Knowledge** (One-time setup):
+    *   Put PDFs in `backend/data/source_documents`.
+    *   Run `python -m rag_system.ingest`.
+2.  **Ask a Expert Question**:
+    *   Open the **Chat Sidebar** (Bottom right Green Button).
+    *   Type a question found in your books (e.g., "What is a Red-Black Tree?").
+    *   **Verify**: The answer should be detailed and accurate.
+    *   *Note*: It may take 5-10 seconds to "read" and think.
+
+## 3. Testing the "Ears" (Emotion)
+The AI listens to your tone.
+
+1.  **Allow Microphone**: Click "Allow" when the browser asks.
+2.  **Speak**: Say something into your mic.
+3.  **Check Backend Console**: Look at the `runserver` terminal. You will see logs like:
+    > `🎤 [AUDIO INPUT] Detected Emotion: NEUTRAL 🎤`
+    > `🎤 [AUDIO INPUT] Detected Emotion: FRUSTRATED 🎤`
+    *   *Note*: The AI does not yet *speak back* (TTS is next), but it hears you.
+
+## 4. Testing the "Hands" (Code Execution)
+1.  Open the **Code Sidebar** (Bottom right Blue Button).
+2.  Type Python code: `print("Hello World")`.
+3.  Click **Run**.
+4.  See output in the console below the editor.
+
+## Current Limitations (Next Steps)
+*   **No Voice Output**: The AI responds in text only. (Planned: Phase 6b).
+*   **Latency**: RAG response is slow. (Planned: Phase 5c Optimization).

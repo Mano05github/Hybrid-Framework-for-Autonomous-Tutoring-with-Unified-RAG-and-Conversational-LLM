@@ -1,0 +1,52 @@
+# Architecture Analysis & Comparison Report
+
+**Reference**:
+1.  **Vision Report**: `vision_alignment_report.md` (The Strategy)
+2.  **User Diagram**: `uploaded_image_1767703509113.png` (The Blueprint)
+
+## 1. Top-Level Assessment
+**Verdict: PERFECT ALIGNMENT.**
+The uploaded architecture diagram is **not older**; in fact, it is **more advanced** and specific than the high-level strategy outlined in the Vision Report. It provides the concrete *implementation details* needed to execute the "Active Canvas" and "Socratic Loop" concepts.
+
+The diagram explicitly details **HOW** the system achieves the Socratic method (through "Sentiment Analysis" and "Adaptive Feedback Loops") and **HOW** the Canvas becomes active (through "Math Solvers" and "Shape Detection").
+
+---
+
+## 2. Component-by-Component Comparison
+
+| Component | Vision Report (Strategy) | User Architecture (Blueprint) | Impact & Action Item |
+| :--- | :--- | :--- | :--- |
+| **User Input** | Voice + Screen Sharing | **Voice + Sentiment Analysis** | **HIGH IMPACT**. The diagram adds *Sentiment Analysis*. <br> *Action*: The AI should detect if the user sounds frustrated and switch from "Socratic Questioning" to "Direct Hinting". |
+| **The Brain** | RAG (Textbooks) | **RAG + Knowledge Graphs** | **CRITICAL**. RAG is good for text, but *Knowledge Graphs* are essential for STEM (e.g., knowing that "Algebra" precedes "Calculus"). <br> *Action*: We should plan to structure our RAG data into a Graph format eventually. |
+| **The Loop** | Socratic System Prompt | **Adaptive Feedback Loop** | **Validation**. The diagram explicitly models an "Adaptive Feedback Loop" with "Performance Monitoring". This confirms we need a state machine backend, not just a stateless LLM. |
+| **Visuals** | Active Canvas (Drawing) | **Interactive Blackboard**<br>(Math Solver, Handwriting, Shape Detect) | **FEATURE EXPANSION**. The diagram suggests specific STEM tools: <br> 1. **Handwriting Rec**: Allow users to write on the iPad/Tablet? <br> 2. **Math Solver**: Integrated symbolic engine (like Wolfram/SymPy) to check answers, not just LLM text. |
+| **Output** | Voice + Visuals | **TTS + Dynamic Lesson Content** | **Aligned**. Both agree that the output is multimodal. |
+
+---
+
+## 3. New "Impactful Components" Identified
+
+The diagram introduces three highly valuable components that were not explicitly in the Vision Report:
+
+### A. Sentiment Analysis (The "Empathy" Layer)
+*   **Concept**: The diagram shows audio being analyzed for *Sentiment*.
+*   **Why it helps**: A Socratic tutor can be annoying if the student is stuck. Detecting frustration allows the Adaptive Engine to say, *"I see this is getting tough, let's take a step back"* instead of asking another hard question.
+
+### B. Math Solver (The "Truth" Layer)
+*   **Concept**: The Blackboard has a "Math Solver" module.
+*   **Why it helps**: LLMs are notoriously bad at arithmetic calculation. Relying on a symbolic solver (like Python libraries) for the *actual* math ensures the AI never teaches 2+2=5.
+
+### C. Knowledge Graphs (The "Curriculum" Layer)
+*   **Concept**: The diagram pairs RAG with Knowledge Graphs.
+*   **Why it helps**: This allows the system to be "Goal Oriented". Instead of just answering the current question, the Knowledge Graph knows *what concept comes next*, enabling true long-term tutoring.
+
+---
+
+## 4. Conclusion & Recommendation
+
+**Keep the Diagram.** It is a superior blueprint for the STEM-specific implementation.
+
+**Integration Strategy:**
+1.  **Adopt "Sentiment Analysis"**: even if simulated initially (e.g., user clicks "I'm stuck" button).
+2.  **Upgrade "Active Canvas" to "Interactive Blackboard"**: Incorporate a library like `mathlive` or `Equation Editor` into the frontend to match the "Math Solver" requirement.
+3.  **Stateful Backend**: The "Adaptive Feedback Loop" confirms our decision to move logic to the backend (Django), as the Frontend alone cannot maintain this complex loop.

@@ -1,0 +1,45 @@
+# Personal Tutoring Website - Implementation Plan
+
+## Goal Description
+Create a web platform where users can learn programming logic through interactive whiteboard-style animations, receive explanations from a voice assistant powered by an LLM that synthesizes information from a curated knowledge base and the internet, and get personalized help with an adaptive learning engine.
+
+**Key Visual Requirement**: The main teaching page must feature a split-screen layout:
+- **Left Panel**: Visual representation of the Voice Agent (e.g., an interactive orb or avatar).
+- **Right Panel**: Interactive Whiteboard/Canvas for teaching concepts and animations.
+
+## User Review Required
+- **Design Confirmation**: Confirming the split-screen layout (Voice Agent Left / Whiteboard Right) relative to the uploaded image.
+- **Tech Stack**: Next.js (Frontend), Django (Backend), PostgreSQL + pgvector (DB).
+
+## Proposed Changes
+
+### Frontend (Next.js)
+#### [NEW] [Project Structure]
+- Initialize Next.js project with Tailwind CSS.
+- Configure `layout.tsx` and global styles.
+
+#### [NEW] [Main Page Layout]
+- Implement the split-screen layout.
+- **Left Component**: `VoiceAgentVisual.tsx` - Placeholder for the voice agent animation.
+- **Right Component**: `WhiteboardCanvas.tsx` - Using `react-konva` for the interactive board.
+
+### Backend (Django)
+#### [NEW] [Core Setup]
+- Initialize Django project.
+- Set up PostgreSQL connection.
+
+#### [NEW] [API Endpoints]
+- `/api/chat/`: Endpoint for LLM interaction.
+- `/api/content/`: Endpoint for retrieving lesson content.
+
+### AI & RAG Services
+#### [NEW] [RAG Pipeline]
+- Ingestion scripts for curated content (books/docs).
+- Web scraping service for dynamic content.
+- Vector store setup (pgvector).
+
+## Verification Plan
+### Manual Verification
+- **Visual Check**: Verify the main page matches the "Voice Agent Left / Whiteboard Right" reference image.
+- **Responsiveness**: Ensure the split layout works on different screen sizes (or degrades gracefully).
+- **Backend Connectivity**: Verify the frontend can successfully ping the backend API.

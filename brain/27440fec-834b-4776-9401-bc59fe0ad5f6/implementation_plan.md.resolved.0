@@ -1,0 +1,23 @@
+# Plan: Verify and Connect Algorithms Flow
+
+## Goal
+Ensure the "Algorithms" learning track is fully functional by seeding the database and verifying the frontend-backend connection.
+
+## Proposed Changes
+
+### Backend
+1.  **Seed Database**: Run [backend/seed_algo_lessons.py](file:///d:/final%20year%20project/V/backend/seed_algo_lessons.py) to populate the database with the initial "Algorithms" curriculum.
+    *   This script creates a [Topic](file:///d:/final%20year%20project/V/backend/core/models.py#12-23) ("Algorithms") and associated [Lesson](file:///d:/final%20year%20project/V/frontend/app/algorithms/page.tsx#8-14) entries.
+
+### Frontend
+1.  **Verify Data Fetching**: Check [frontend/app/algorithms/page.tsx](file:///d:/final%20year%20project/V/frontend/app/algorithms/page.tsx) to ensure it fetches from the correct endpoint (`/api/core/lessons/`) and handles the response correctly.
+2.  **Mock vs Real**: Remove any mock data if present and rely on the API response.
+
+## Verification Plan
+
+### Automated
+1.  **Seed Script**: Run `python backend/seed_algo_lessons.py` and check for success output.
+
+### Manual
+1.  **API Check**: Use `curl` or browser to hit `http://localhost:8000/api/core/lessons/` and verify JSON response.
+2.  **Dashboard Check**: Navigate to `/algorithms` in the frontend and confirm the list of lessons matches the seeded data (e.g., "Introduction to Algorithms", "Selection Sort").

@@ -1,0 +1,376 @@
+/* ===================================
+   ASSESSMENT PAGE STYLES
+   =================================== */
+
+/* ===================================
+   ASSESSMENT HEADER
+   =================================== */
+
+.assessment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.assessment-title {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===================================
+   MODE SWITCHER
+   =================================== */
+
+.mode-switcher {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.5rem;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.mode-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--color-muted-gray);
+    font-family: var(--font-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mode-btn:hover {
+    color: var(--color-soft-white);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mode-btn.active {
+    background: var(--gradient-primary);
+    color: var(--color-void);
+    border-color: transparent;
+}
+
+/* ===================================
+   PROGRESS BAR
+   =================================== */
+
+.progress-container {
+    margin-bottom: var(--space-xl);
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.progress-text,
+.progress-percentage {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-soft-white);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 4px;
+    transition: width 0.6s var(--ease-smooth);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+/* ===================================
+   QUESTION CARD
+   =================================== */
+
+.question-card {
+    animation: slideUp 0.6s var(--ease-smooth);
+}
+
+.question-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.question-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    color: var(--color-void);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.question-text {
+    flex: 1;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-soft-white);
+    line-height: 1.6;
+}
+
+/* ===================================
+   OPTIONS
+   =================================== */
+
+.options-container {
+    display: grid;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.option-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+    text-align: left;
+}
+
+.option-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 212, 255, 0.5);
+    transform: translateX(5px);
+}
+
+.option-card.selected {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.6);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+}
+
+.option-label {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 212, 255, 0.2);
+    color: var(--color-neon-blue);
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.option-card:hover .option-label {
+    background: rgba(0, 212, 255, 0.3);
+}
+
+.option-card.selected .option-label {
+    background: var(--gradient-primary);
+    color: var(--color-void);
+}
+
+.option-text {
+    flex: 1;
+    font-size: 1rem;
+    color: var(--color-soft-white);
+    font-weight: 500;
+}
+
+/* ===================================
+   REASONING SECTION
+   =================================== */
+
+.reasoning-section {
+    margin-bottom: var(--space-xl);
+}
+
+.reasoning-label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-soft-white);
+    margin-bottom: var(--space-sm);
+}
+
+.reasoning-textarea {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    color: var(--color-soft-white);
+    font-family: var(--font-primary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.reasoning-textarea:focus {
+    border-color: rgba(0, 212, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.reasoning-textarea::placeholder {
+    color: var(--color-muted-gray);
+}
+
+/* ===================================
+   QUESTION ACTIONS
+   =================================== */
+
+.question-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.question-actions .btn svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+
+/* ===================================
+   CODE CHALLENGE MODE
+   =================================== */
+
+.code-challenge-card {
+    animation: slideUp 0.6s var(--ease-smooth);
+}
+
+.challenge-header {
+    margin-bottom: var(--space-lg);
+}
+
+.challenge-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-soft-white);
+}
+
+.challenge-description {
+    margin-bottom: var(--space-xl);
+    padding: var(--space-md);
+    background: rgba(0, 212, 255, 0.05);
+    border-left: 4px solid var(--color-neon-blue);
+    border-radius: 8px;
+}
+
+.challenge-description p {
+    color: var(--color-soft-white);
+    line-height: 1.8;
+}
+
+.code-template {
+    margin-bottom: var(--space-xl);
+    background: rgba(10, 10, 15, 0.8);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    padding: var(--space-md);
+}
+
+.code-template pre {
+    margin: 0;
+    overflow-x: auto;
+}
+
+.code-template code {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--color-soft-white);
+    line-height: 1.6;
+}
+
+.challenge-actions {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.challenge-actions .btn svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 768px) {
+    .assessment-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .assessment-title {
+        font-size: 1.5rem;
+    }
+    
+    .mode-switcher {
+        width: 100%;
+    }
+    
+    .mode-btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .question-header {
+        flex-direction: column;
+    }
+    
+    .question-actions {
+        flex-direction: column;
+    }
+    
+    .question-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .challenge-actions {
+        flex-direction: column;
+    }
+    
+    .challenge-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

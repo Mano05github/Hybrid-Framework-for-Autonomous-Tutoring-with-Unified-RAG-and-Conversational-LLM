@@ -1,0 +1,18 @@
+# Project Status and Tasks
+
+## Completed
+- [x] **Frontend Architecture**: Next.js app initialized with core pages (Landing, Auth, Dashboard, Editor).
+- [x] **UI/UX**: Modern dashboard design with Bento Grid, Glassmorphism, and Dark Mode.
+- [x] **Backend Architecture**: Django backend configured.
+- [x] **PDF Integration Logic**: [seed_algo_lessons.py](file:///d:/final%20year%20project/V/backend/seed_algo_lessons.py) created to populate initial "Algorithms" curriculum.
+- [x] **Auth**: Registration page implemented (`frontend/app/auth/register`).
+
+## Current Task: System Verification & Flow Connection
+- [/] **Verify Lesson Seeding**: Run `seed_algo_lessons.py` to ensure database is populated.
+- [ ] **Connect Dashboard**: Ensure the "Algorithms" tile correctly routes to the lesson list.
+- [ ] **Lesson View**: Verify individual lesson pages render content correctly.
+
+## Upcoming
+- [ ] **RAG Integration**: Connect the AI chat to the specific context of the open lesson.
+- [ ] **Code Execution**: Wire up the Code Editor to a backend execution environment (Piston/Judge0).
+- [ ] **Progress Tracking**: Implement user progress persistence.

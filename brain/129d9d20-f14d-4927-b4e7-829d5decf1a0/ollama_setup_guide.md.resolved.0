@@ -1,0 +1,32 @@
+# Setting Up Mistral Locally with Ollama (Windows)
+
+This guide will walk you through installing the "Engine" (Ollama) and the "Brain" (Mistral).
+
+## Step 1: Install Ollama
+1.  **Download**: Click this link: [Download Ollama for Windows](https://ollama.com/download/windows).
+2.  **Install**: Run the `.exe` file you downloaded. It's a standard installer.
+    *   *Note*: It might install silently to your taskbar (tray icon).
+
+## Step 2: Pull the Model (Mistral)
+1.  Open your **Command Prompt** (cmd) or PowerShell.
+2.  Type the following command and hit Enter:
+    ```bash
+    ollama run mistral
+    ```
+3.  **Wait**: It will download about **4.1 GB**.
+    *   *Speed depends on your internet.*
+
+## Step 3: Verify It's Working
+Once the download hits 100%, you will see a prompt like `>>>`.
+1.  Type: `Hello, how are you?`
+2.  If it replies, **SUCCESS!** You are running a private AI on your own hardware.
+3.  Type `/bye` to exit the chat mode.
+
+## Step 4: Keep the Server Running
+Ollama runs in the background automatically. You don't need to keep the terminal open.
+You can check if it's listening by opening your browser to:
+`http://localhost:11434`
+(It should say "Ollama is running").
+
+---
+**Once you have done this, tell me "Mistral is ready", and we will connect the Python backend to it.**

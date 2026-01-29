@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor - Vaathiyar</title>
+    <meta name="description" content="Interactive Python code editor with real-time execution">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/shared-learning.css">
+    <link rel="stylesheet" href="/static/css/editor.css">
+    
+    <!-- Auth Guard (must load first) -->
+    <script src="/static/js/auth-guard.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/websocket-client.js"></script>
+    <script>
+        // Check authentication before page loads
+        (async () => {
+            const isAuthenticated = await AuthGuard.checkAuth();
+            if (!isAuthenticated) return;
+        })();
+    </script>
+</head>
+<body>
+    <!-- Floating Particles Background -->
+    <canvas id="particles-bg"></canvas>
+    
+    <!-- Ambient Glow Effects -->
+    <div class="ambient-layer">
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="top-nav">
+        <span class="brand">Vaathiyar</span>
+        <div class="nav-actions">
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- Main Page Container -->
+    <div class="page-container">
+        <div class="split-layout">
+            
+            <!-- Voice Panel -->
+            <div class="voice-panel">
+                <button class="toggle-panel-btn" title="Toggle voice panel">◀</button>
+                <div class="waveform-container">
+                    <canvas id="waveform-canvas"></canvas>
+                </div>
+                <p class="status-text">Listening...</p>
+                <div class="voice-input-container">
+                    <input type="text" class="voice-input" placeholder="Type your message...">
+                    <button class="voice-btn">🎤</button>
+                </div>
+            </div>
+
+            <!-- Editor Content -->
+            <div class="content-area editor-container">
+                
+                <!-- Editor Toolbar -->
+                <div class="editor-toolbar">
+                    <div class="toolbar-left">
+                        <span class="editor-title">Python Editor</span>
+                        <span class="editor-label">Gap 3/5 Integration</span>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="toolbar-btn hint-btn" id="hintBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            💡 Hint
+                        </button>
+                        <button class="toolbar-btn run-btn" id="runBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            ▶ Run
+                        </button>
+                        <button class="toolbar-btn reset-btn" id="resetBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            🔄 Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Monaco Editor Container -->
+                <div class="monaco-editor-wrapper">
+                    <div id="monaco-editor"></div>
+                </div>
+
+                <!-- Output Panel -->
+                <div class="output-panel">
+                    <div class="output-header">
+                        <div class="output-status" id="outputStatus">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Output</span>
+                        </div>
+                        <button class="clear-output-btn" id="clearOutputBtn">Clear</button>
+                    </div>
+                    <div class="output-content" id="outputContent">
+                        <p class="output-placeholder">$ Ready to run your code...</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Monaco Editor CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/websocket-client.js"></script>
+    <script src="/static/js/shared-utils.js"></script>
+    <script src="/static/js/editor.js"></script>
+</body>
+</html>

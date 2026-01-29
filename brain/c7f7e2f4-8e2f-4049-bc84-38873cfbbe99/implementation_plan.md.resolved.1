@@ -1,0 +1,52 @@
+# Implementation Plan - Phase 3: AI & RAG Integration
+
+## Goal Description
+Integrate Artificial Intelligence capabilities into the backend. This includes setting up an LLM service (Google Gemini or OpenAI) for text generation and configuring a Vector Database (`pgvector`) to enable Retrieval-Augmented Generation (RAG) for the tutoring system.
+
+## User Review Required
+> [!IMPORTANT]
+> **LLM Provider**: Please specify if you prefer **Google Gemini** or **OpenAI**. I will assume **Google Gemini** for now as it offers a generous free tier.
+> **API Key**: You will need to provide the API Key in the [.env](file:///d:/final%20year%20project/V/backend/.env) file (`GEMINI_API_KEY` or `OPENAI_API_KEY`).
+> **PostgreSQL Extension**: Ensure your local PostgreSQL installation supports extensions. We will install the `vector` extension.
+
+## Proposed Changes
+
+### Dependencies
+#### [MODIFY] [backend/requirements.txt](file:///d:/final year project/V/backend/requirements.txt)
+- Add `google-generativeai` (for Gemini) or `openai`.
+- Add `langchain`, `langchain-community` (for orchestration).
+- Add `pgvector` (Python client) and `psycopg2-binary` (already there).
+- Add `tiktoken` (for token counting).
+
+### Database Setup
+#### [NEW] [backend/rag/migrations/0001_enable_pgvector.py](file:///d:/final year project/V/backend/rag/migrations/0001_enable_pgvector.py)
+- Create a migration to enable the `vector` extension in PostgreSQL: `CREATE EXTENSION IF NOT EXISTS vector;`.
+
+### RAG App Structure
+#### [NEW] [backend/rag/](file:///d:/final year project/V/backend/rag/)
+- Create a new Django app named `rag` to handle embeddings and retrieval.
+- **Models**:
+  - `KnowledgeChunk`: Store text content and its vector embedding.
+    - Fields: `content` (TextField), `embedding` (VectorField), `source` (URL/Title).
+
+### AI Service Layer
+#### [NEW] [backend/rag/services.py](file:///d:/final year project/V/backend/rag/services.py)
+- `LLMService`: Wrapper around the chosen LLM API.
+  - `generate_response(prompt)`
+- `EmbeddingService`: Wrapper to generate embeddings for text.
+  - `embed_text(text)`
+
+### API Endpoints
+#### [NEW] [backend/rag/views.py](file:///d:/final year project/V/backend/rag/views.py)
+- `AskAIView`: Endpoint where frontend sends a query, backend retrieves context, calls LLM, and returns answer.
+
+## Verification Plan
+
+### Automated Tests
+- Create a test script `test_rag.py` to:
+  1.  Test connection to LLM API (simple "Hello" prompt).
+  2.  Test embedding generation.
+  3.  Test vector insertion and similarity search in DB.
+
+### Manual Verification
+- Use the `AskAIView` endpoint via Postman/cURL to ask a question and verify the response is relevant.

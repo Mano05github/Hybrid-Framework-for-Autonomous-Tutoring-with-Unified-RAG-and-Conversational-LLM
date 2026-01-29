@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment | Vaathiyar</title>
+    <meta name="description" content="Test your knowledge with interactive assessments">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/shared-learning.css">
+    <link rel="stylesheet" href="/static/css/assessment.css">
+</head>
+<body>
+    <!-- Floating Particles Background -->
+    <canvas id="particles-bg"></canvas>
+    
+    <!-- Ambient Glow Effects -->
+    <div class="ambient-layer">
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="top-nav">
+        <span class="brand">Vaathiyar</span>
+        <div class="nav-actions">
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+    </nav>
+
+    <!-- Main Page Container -->
+    <div class="page-container">
+        <div class="split-layout">
+            
+            <!-- Voice Panel -->
+            <div class="voice-panel">
+                <button class="toggle-panel-btn" title="Toggle voice panel">◀</button>
+                <div class="waveform-container">
+                    <canvas id="waveform-canvas"></canvas>
+                </div>
+                <p class="status-text">Listening...</p>
+                <div class="voice-input-container">
+                    <input type="text" class="voice-input" placeholder="Type your message...">
+                    <button class="voice-btn">🎤</button>
+                </div>
+            </div>
+
+            <!-- Assessment Content -->
+            <div class="content-area">
+                
+                <!-- Assessment Header -->
+                <div class="assessment-header">
+                    <h1 class="assessment-title">Online Assessment - Module 1</h1>
+                    
+                    <!-- Mode Switcher -->
+                    <div class="mode-switcher">
+                        <button class="mode-btn active" data-mode="mcq">
+                            📝 MCQ
+                        </button>
+                        <button class="mode-btn" data-mode="code">
+                            💻 Code
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span class="progress-text">Question <span id="currentQuestion">1</span>/<span id="totalQuestions">10</span></span>
+                        <span class="progress-percentage"><span id="progressPercent">10</span>%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 10%"></div>
+                    </div>
+                </div>
+
+                <!-- MCQ Mode Content -->
+                <div class="assessment-content" id="mcqContent">
+                    <div class="question-card glass-card">
+                        <div class="question-header">
+                            <div class="question-number">Q1</div>
+                            <h2 class="question-text" id="questionText">What is the capital of France?</h2>
+                        </div>
+
+                        <div class="options-container" id="optionsContainer">
+                            <button class="option-card" data-option="A">
+                                <div class="option-label">A</div>
+                                <span class="option-text">Berlin</span>
+                            </button>
+                            <button class="option-card" data-option="B">
+                                <div class="option-label">B</div>
+                                <span class="option-text">Madrid</span>
+                            </button>
+                            <button class="option-card" data-option="C">
+                                <div class="option-label">C</div>
+                                <span class="option-text">Paris</span>
+                            </button>
+                            <button class="option-card" data-option="D">
+                                <div class="option-label">D</div>
+                                <span class="option-text">Rome</span>
+                            </button>
+                        </div>
+
+                        <div class="reasoning-section">
+                            <label for="reasoning" class="reasoning-label">💭 Explain your reasoning:</label>
+                            <textarea 
+                                id="reasoning" 
+                                class="reasoning-textarea" 
+                                placeholder="Type your explanation here..."
+                                rows="4"
+                            ></textarea>
+                        </div>
+
+                        <div class="question-actions">
+                            <button class="btn btn-secondary" id="prevBtn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                                Previous
+                            </button>
+                            <button class="btn btn-success" id="submitBtn">Submit Test</button>
+                            <button class="btn btn-primary" id="nextBtn">
+                                Next
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Challenge Mode Content -->
+                <div class="assessment-content hidden" id="codeContent">
+                    <div class="code-challenge-card glass-card">
+                        <div class="challenge-header">
+                            <h2 class="challenge-title">💻 Code Challenge</h2>
+                        </div>
+
+                        <div class="challenge-description">
+                            <p>Write a function to insert a node into a Binary Search Tree. The function should maintain the BST property where left children are smaller and right children are larger than the parent node.</p>
+                        </div>
+
+                        <div class="code-template">
+                            <pre><code class="language-python"># Your task:
+def insert(root, val):
+    # Your code here
+    pass</code></pre>
+                        </div>
+
+                        <div class="challenge-actions">
+                            <button class="btn btn-secondary">
+                                💡 Get Hint
+                            </button>
+                            <button class="btn btn-primary" onclick="window.location.href='editor.html'">
+                                Open Editor
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/shared-utils.js"></script>
+    <script src="/static/js/assessment.js"></script>
+</body>
+</html>

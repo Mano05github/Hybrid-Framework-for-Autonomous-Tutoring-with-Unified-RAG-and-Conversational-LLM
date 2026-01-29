@@ -1,0 +1,56 @@
+# Deep Analysis: RAG Agent ("The Librarian")
+
+## 1. 🏛️ Agent Description
+*   **Name**: RAG Agent.
+*   **Role**: The deterministic retrieval engine. It manages the "Knowledge Base".
+*   **Philosophy**: "Accuracy above all." No hallucinations.
+
+---
+
+## 2. ⚙️ Technical Working Model
+
+### Inputs
+1.  **Query**: "Time complexity of BST"
+2.  **Filters**: (Optional) "Source: Cormen Book"
+
+### Core Logic (The Algorithms)
+#### A. Hybrid Search
+*   **Vector Search**: `Cosine Similarity` on Embeddings (captures meaning).
+*   **Keyword Search**: `BM25` (captures exact terminology).
+*   **Fusion**: Reciprocal Rank Fusion (RRF) to combine results.
+
+#### B. Re-Ranking (The Refiner)
+*   **Step**: Takes top 20 results from Search.
+*   **Model**: Cross-Encoder (`ms-marco-MiniLM`).
+*   **Action**: Scores every result against the query and re-sorts. Returns Top 3.
+
+### Outputs
+*   **Context Chunks**: List of strings containing the raw text.
+*   **Source Metadata**: Page numbers, Book titles.
+
+---
+
+## 3. 🔄 Workflow Diagram
+
+```mermaid
+graph LR
+    Query --> Embed[Sentence Transformer]
+    Query --> Keyword[BM25]
+    
+    Embed --> VectorDB[(ChromaDB)]
+    Keyword --> Index[(Inverted Index)]
+    
+    VectorDB --> ResultsA
+    Index --> ResultsB
+    
+    ResultsA & ResultsB --> Reranker[Cross Encoder]
+    Reranker --> Top3(Verified Chunks)
+```
+
+---
+
+## 4. 🛠️ Implementation Specs
+
+*   **Vector DB**: `ChromaDB` (Local, Persistent).
+*   **Embeddings**: `sentence-transformers/all-MiniLM-L6-v2`.
+*   **Ingestion**: Offline Python Script (`ingest.py`).

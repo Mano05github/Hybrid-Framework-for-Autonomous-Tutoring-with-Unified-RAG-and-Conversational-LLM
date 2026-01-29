@@ -1,0 +1,36 @@
+# SHG Member ID Card Photo Automation - Implementation Plan
+
+## Goal Description
+Automate the process of updating SHG member photos on the Minmathi ID Card portal. The script will navigate the UI, download photos, resize them to 300x400px, and re-upload them.
+
+## User Review Required
+> [!IMPORTANT]
+> **Credentials**: User needs to provide credentials (username/password) safely, likely via `.env` file or direct input, as they are not in the plan.
+> **Environment**: Requires Chrome installed for Selenium ChromeDriver.
+
+## Proposed Changes
+
+### Project Structure
+#### [NEW] [main.py](file:///d:/New%20folder/main.py)
+Entry point of the script. Orchestrates the workflow.
+
+#### [NEW] [image_processor.py](file:///d:/New%20folder/image_processor.py)
+Handles image downloading, resizing (300x400), and saving.
+
+#### [NEW] [browser_handler.py](file:///d:/New%20folder/browser_handler.py)
+Encapsulates Selenium logic: Login, Navigation, Filter Selection, Interaction with tables/forms.
+
+#### [NEW] [logger.py](file:///d:/New%20folder/logger.py)
+Handles CSV logging for audit functionality.
+
+#### [NEW] [requirements.txt](file:///d:/New%20folder/requirements.txt)
+Dependencies: `selenium`, `pillow`, `python-dotenv`.
+
+## Verification Plan
+
+### Automated Tests
+- Unit tests for `image_processor.py` using sample images to verify 300x400 output.
+
+### Manual Verification
+- Run the script with `headless=False` to visually verify navigation.
+- Check the portal manually to see if a photo was updated correctly for a test member.

@@ -1,0 +1,28 @@
+django>=5.0
+djangorestframework
+psycopg2-binary
+pgvector
+openai
+google-generativeai
+google-cloud-texttospeech>=2.14.0   # Google Cloud TTS
+langchain
+langchain-community
+python-dotenv
+django-cors-headers
+SpeechRecognition
+pydub
+
+# Code Sandbox (Gap 3)
+RestrictedPython>=6.0
+
+# RAG System - Basic
+chromadb
+sentence-transformers
+pypdf
+spacy
+
+# Omni-RAG - Advanced Components
+rank-bm25              # BM25 keyword search
+setfit                 # SetFit for intent classification
+torch                  # PyTorch for ML models
+numpy                  # Numerical operations

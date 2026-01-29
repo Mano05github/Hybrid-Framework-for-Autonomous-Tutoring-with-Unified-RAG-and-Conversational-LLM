@@ -1,0 +1,101 @@
+# Multi-Agent Architecture Strategy (LangGraph)
+
+**Goal**: Transform "Vaathiyar" from a single bot into a **Team of Specialist Agents**.
+**Core Technology**: `LangGraph` (by LangChain) for stateful, cyclic agent workflows.
+
+---
+
+## 🏗️ The High-Level Concept: "The Staff Room"
+
+Instead of one "Tutor" trying to do everything, we create a virtual staff room.
+The **Supervisor (Router)** acts as the Principal. It listens to the user and assigns the task to the best specialist.
+
+```mermaid
+graph TD
+    User((Student)) -->|Input| Supervisor[👨‍🏫 Supervisor Agent]
+    
+    Supervisor -->|Needs Explanation| Teacher[👩‍🏫 Teacher Agent]
+    Supervisor -->|Needs Code/Debug| Coder[👨‍💻 Coder Agent]
+    Supervisor -->|Needs Quiz/Test| Examiner[📝 Examiner Agent]
+    Supervisor -->|Emotional Crisis| Empath[❤️ Empath Agent]
+    
+    Teacher -->|Response| Supervisor
+    Coder -->|Response| Supervisor
+    Examiner -->|Response| Supervisor
+    Empath -->|Advice| Supervisor
+    
+    Supervisor -->|Final Answer| User
+```
+
+---
+
+## 🤖 The Agents (Roles & responsibilities)
+
+### 1. 👨‍🏫 The Supervisor (Router)
+*   **Role**: The Orchestrator. It never "teaches" directly. It only plans.
+*   **Input**: User Message + Emotion State.
+*   **Decision Logic**:
+    *   "Define Binary Search Tree" -> Route to **Teacher**.
+    *   "Why is my code throwing an error?" -> Route to **Coder**.
+    *   "Give me a test" -> Route to **Examiner**.
+    *   (Detected Anger/Frustration) -> Route to **Empath** first.
+*   **Tools**: None. It uses the other agents as tools.
+
+### 2. 👩‍🏫 The Teacher (RAG Specialist)
+*   **Role**: The Knowledge Expert.
+*   **Superpower**: Access to the Library (PDFs).
+*   **Tools**: `RAGRetriever` (ChromaDB), `SearchWeb` (Optional).
+*   **Flow**:
+    ```mermaid
+    graph LR
+        Input --> Retrieve[Search Vectors] --> Synthesize[LLM Answer] --> Output
+    ```
+
+### 3. 👨‍💻 The Coder (Execution Specialist)
+*   **Role**: The Practical Instructor.
+*   **Superpower**: Can write and *verify* code.
+*   **Tools**: `CodeExecutor` (Pyodide Sandbox).
+*   **Flow**:
+    ```mermaid
+    graph LR
+        Input --> Generate[Write Code] --> Test[Run Code] --> Debug{Error?}
+        Debug -- Yes --> Generate
+        Debug -- No --> Output
+    ```
+
+### 4. ❤️ The Empath (Sentiment Specialist)
+*   **Role**: The Counselor.
+*   **Superpower**: High EQ (Emotional Intelligence).
+*   **Input**: Audio Analysis (Librosa) + Text Tone.
+*   **Output**: A hidden instruction to the Supervisor (e.g., *"The student is frustrated. Switch to 'Encouraging Mode' and lower simple questions."*)
+
+---
+
+## 🛠️ Implementation Technology: LangGraph
+
+We use **LangGraph** to define this "State Machine".
+
+**Why LangGraph?**
+Standard chains are linear (Step 1 -> Step 2).
+Agents need **Loops**:
+> *Teacher explains X -> Student doesn't understand -> Teacher tries Analogy -> Student understands.*
+LangGraph handles these cycles perfectly.
+
+### The "State" Schema
+All agents share a single "Memory State":
+```python
+class AgentState(TypedDict):
+    messages: list[BaseMessage]   # Chat History
+    current_topic: str           # "BST"
+    user_emotion: str            # "Frustrated"
+    knowledge_level: float       # 0.4 (Beginner)
+    next_step: str               # "Teacher" or "Coder"
+```
+
+---
+
+## 📅 Implementation Roadmap
+
+1.  **Phase 7a: The Router**: Replace specific logical blocks in `SessionOrchestrator` with a `Supervisor` node.
+2.  **Phase 7b: Separation**: Move `RAG` logic into `TeacherNode` and `Code` logic into `CoderNode`.
+3.  **Phase 7c: The Empath**: Connect `EmotionService` to update the `AgentState.user_emotion` instantly.

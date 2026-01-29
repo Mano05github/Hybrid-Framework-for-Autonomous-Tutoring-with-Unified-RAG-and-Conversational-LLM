@@ -1,0 +1,22 @@
+# SHG Member ID Card Photo Automation
+
+- [ ] Project Setup
+    - [ ] Create virtual environment and install dependencies (selenium, pillow, opencv-python, python-dotenv)
+    - [ ] Create project structure
+- [ ] Image Processing Module
+    - [ ] Implement image resizing and cropping logic (300x400px)
+    - [ ] Test image processing with sample images
+- [ ] Automation Script - Core
+    - [ ] Implement Login functionality
+    - [ ] Implement Navigation to "Mathi Verification"
+    - [ ] Implement Filter selection
+- [ ] Automation Script - Iteration & Action
+    - [ ] Implement Group iteration
+    - [ ] Implement Member iteration
+    - [ ] Implement Photo Download, Process, Upload, Save loop
+- [ ] Logging & Error Handling
+    - [ ] Implement CSV logging
+    - [ ] Add error handling and retries
+- [ ] Verification
+    - [ ] Dry run (audit mode)
+    - [ ] specific group test

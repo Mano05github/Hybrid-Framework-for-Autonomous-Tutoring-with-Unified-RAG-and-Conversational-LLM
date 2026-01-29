@@ -1,0 +1,24 @@
+# Phase 7: Visionary Agent (The Eyes)
+
+## Goal
+Enable the AI Tutor to "see" and interpret the whiteboard, quiz, and code editor.
+
+## Achievements
+1.  **Visionary Schema**: Implemented "Dual-Sight" Strategy.
+    *   **Virtual Sight**: Real-time data streams for Quiz/Code (Zero Latency).
+    *   **True Sight**: Snapshot analysis for Whiteboard (Visual Insight).
+2.  **Multimodal Backend**:
+    *   Updated [OllamaProvider](file:///d:/final%20year%20project/V/backend/llm_engine/domain_local/ollama_provider.py#8-71) (Llama 3.2 Vision) and [GeminiProvider](file:///d:/final%20year%20project/V/backend/llm_engine/domain_gemini/gemini_provider.py#9-59) to accept images.
+    *   Created [VisionaryAgent](file:///d:/final%20year%20project/V/backend/ai_engine/visionary.py#10-60) to process visual context.
+3.  **Frontend Integration**:
+    *   **Auto-Watcher**: Implemented a "Debounced Observer" that silently captures whiteboard snapshots when drawing pauses.
+    *   **Visual Feedback**: AI now speaks its analysis of your diagrams.
+
+## Verification
+- [x] **Draw "Binary Search Tree"**: AI recognizes the nodes and edges.
+- [x] **Draw "a + b"**: AI identifies the algebraic expression.
+- [x] **Auto-Trigger**: Verified that pausing triggers the analysis without manual clicks.
+
+## Next Step
+**Phase 8: The Adaptive Coach (Meta-Cognition)**.
+We will now implement the "Brain" that uses these "Eyes" and "Ears" to track learning progress over time.

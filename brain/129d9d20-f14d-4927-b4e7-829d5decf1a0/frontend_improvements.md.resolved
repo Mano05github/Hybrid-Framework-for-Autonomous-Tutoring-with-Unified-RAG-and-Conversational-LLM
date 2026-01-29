@@ -1,0 +1,73 @@
+# Frontend Improvements & Corrections Report
+**Reference**: [final_architecture_strategy.md](file:///d:/final%20year%20project/V/final_architecture_strategy.md)
+
+## 1. Executive Summary
+The current frontend is polished but **structurally different** from the "Active Canvas" vision. It currently operates as three separate silos: a generic Chatbot (`/learn`), a standalone Code Editor (`/editor`), and a passive Voice Visualizer ([VoiceAgentVisual.tsx](file:///d:/final%20year%20project/V/frontend/components/learning-session/VoiceAgentVisual.tsx)).
+
+To achieve the "North Star" user flow, we must **merge** these into a single "Unified Learning Environment."
+
+---
+
+## 2. Required Corrections
+
+### A. Transform [VoiceAgentVisual](file:///d:/final%20year%20project/V/frontend/components/learning-session/VoiceAgentVisual.tsx#7-72) into "ActiveWhiteboard"
+**Current State**: A simple CSS animation of 4 dots.
+**Required Change**:
+-   **Library**: Integrate `react-konva` (as per [package.json](file:///d:/final%20year%20project/V/frontend/package.json) dependencies).
+-   **Functionality**:
+    -   Accept specific drawing commands via props (e.g., `drawNode`, `connectNodes`).
+    -   Allow user mouse events (drawing, clicking) to be emitted back to the parent.
+-   **Visual**: It needs to look like an infinite canvas (grid background), not just a black box.
+
+### B. Merge Editor & Canvas (`/learn/session`)
+**Current State**: `/editor` is a separate page. `/learn` is a text chat.
+**Required Change**:
+-   Create a **Split-Pane Layout** for the actual learning session.
+    -   **Left/Top**: The `ActiveWhiteboard` (for concepts, diagrams).
+    -   **Right/Bottom**: The `MonacoEditor` (for implementation).
+    -   **Floating/Sidebar**: The Voice/Chat interface.
+-   **Why**: The Socratic loop requires moving between *Logic* (Canvas) and *Syntax* (Editor) fluidly.
+
+### C. "Canvas-First" UI Architecture
+**Current State**: The `/learn` page is dominated by a chat list (`messages.map`).
+**Required Change**:
+-   The **Canvas** should be the background/main view.
+-   The **Chat** should be an overlay or a collaborative sidebar (like Figma comments or VScode Chat), not the main focus.
+-   **Reasoning**: We want "Active Co-Creation," not just "Messaging."
+
+---
+
+## 3. Proposed Component Restructure
+
+```tsx
+// New Layout for app/learn/session/page.tsx
+<div className="h-screen flex flex-col">
+  <Header /> // "Topic: Binary Search Trees"
+  
+  <div className="flex-1 flex">
+     {/* 1. The Active Canvas (Main Stage) */}
+     <div className="flex-1 relative bg-grid-pattern">
+         <ActiveWhiteboard 
+            mode={drawingMode} 
+            elements={canvasElements} 
+            onDraw={handleUserDraw} 
+         />
+         
+         {/* Voice Interaction Overlay */}
+         <div className="absolute top-4 center">
+             <VoiceVisualizerState />
+         </div>
+     </div>
+
+     {/* 2. The Integrated Code Editor (Collapsible) */}
+     <div className="w-1/3 border-l border-gray-800">
+         <EmbeddedCodeEditor code={currentCode} />
+     </div>
+  </div>
+</div>
+```
+
+## 4. Immediate Action Plan
+1.  **Refactor `/learn`**: Move the current "Chat-only" logic to a sidebar component.
+2.  **Prototype `ActiveWhiteboard`**: Create a basic `react-konva` stage that can draw a simple node.
+3.  **Embed Editor**: Extract the [Editor](file:///d:/final%20year%20project/V/frontend/app/editor/page.tsx#14-162) from [app/editor/page.tsx](file:///d:/final%20year%20project/V/frontend/app/editor/page.tsx) into a reusable `<CodeEditorComponent />` and place it alongside the whiteboard.

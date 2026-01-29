@@ -1,0 +1,55 @@
+# SHG Member ID Card Photo Automation - Implementation Plan (Semi-Automated)
+
+## Goal Description
+Create a "Co-pilot" script. The User handles Login and Group Selection. The Script automates the repetitive "Member Detail -> Process Photo -> Update" loop.
+
+## User Review Required
+> [!IMPORTANT]
+> **Workflow Change**: Script assumes User has already opened a Group Member List.
+> **Background Removal**: Will use `rembg` library to change background to white. This is computationally heavier but effective.
+> **Right-Side Download**: Script will strictly download the **Right-Side** image as requested.
+
+## Proposed Changes
+
+### Project Structure
+
+#### [MODIFY] [requirements.txt](file:///d:/New%20folder/requirements.txt)
+- Add `rembg`, `onnxruntime` (for rembg).
+
+#### [MODIFY] [main.py](file:///d:/New%20folder/main.py)
+- **Remove**: Login, Navigation, Filter logic.
+- **Add**: "Wait for User Ready" prompt.
+- **Implement**: `process_current_group()` loop.
+- **Logic**:
+  1. Launch Browser (or attach).
+  2. Pause "Please Navigate to a Group List and press Enter".
+  3. `browser.get_all_members_in_list()`
+  4. Loop:
+     - `browser.open_member(index)`
+     - `browser.download_right_image()`
+     - `image_processor.process(image_path)` (Resize + White BG)
+     - `browser.upload_image(processed_path)`
+     - `browser.go_back_to_list()`
+  5. Pause "Group Done. Select next group and press Enter".
+
+#### [MODIFY] [browser_handler.py](file:///d:/New%20folder/browser_handler.py)
+- **Focus**: Interaction within the Member List and Member Detail pages.
+- **New Methods**:
+  - `get_member_count()`
+  - `click_member_view(index)`
+  - `click_download_right()`
+  - `upload_file(path)`
+  - `click_back_button()`
+
+#### [MODIFY] [image_processor.py](file:///d:/New%20folder/image_processor.py)
+- **Update**: Add Background Removal logic (`rembg`).
+- **Standard**: 300x400px, White Background.
+
+## Verification Plan
+
+### Automated Tests
+- Test `image_processor` locally with a sample image to ensure Background Removal works and output is 300x400.
+
+### Manual Verification
+- Run script. User logs in. User selects "Rural... Endiyur".
+- Script processes 1 member. User verifies the uploaded photo looks correct (White BG, resized).

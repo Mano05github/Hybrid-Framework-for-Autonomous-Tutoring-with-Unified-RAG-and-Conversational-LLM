@@ -1,0 +1,51 @@
+# Implementation Plan - Enhanced Authentication (Social Login & Frontend)
+
+## Goal Description
+Implement a complete authentication system including standard Email/Password registration and Social Login (Google, GitHub, Microsoft). This involves setting up `django-allauth` on the backend and creating polished Login/Registration pages on the Next.js frontend.
+
+## User Review Required
+> [!IMPORTANT]
+> **Client IDs & Secrets**: You must obtain OAuth Client IDs and Secrets from:
+> - **Google Cloud Console** (Google Auth)
+> - **GitHub Developer Settings** (GitHub Auth)
+> - **Microsoft Azure Portal** (Microsoft Auth)
+>
+> Add these to your `.env` file once obtained.
+
+## Requirements List
+1.  **Frontend Pages**:
+    -   `app/auth/login/page.tsx`: Username/Password form + "Continue with [Provider]" buttons.
+    -   `app/auth/register/page.tsx`: Form with Email, Username, Password, Confirm Password + Social Buttons.
+2.  **Backend Auth**:
+    -   Support for Token-based auth (JWT or Session) with Social integrations.
+    -   Endpoints for `login`, `register`, `google`, `github`, `microsoft`.
+
+## Proposed Changes
+
+### Backend Dependencies & Settings
+#### [MODIFY] [backend/requirements.txt](file:///d:/final year project/V/backend/requirements.txt)
+- Add `django-allauth`, `dj-rest-auth`, `djangorestframework-simplejwt`.
+
+#### [MODIFY] [backend/config/settings.py](file:///d:/final year project/V/backend/config/settings.py)
+- Add `allauth`, `allauth.account`, `allauth.socialaccount`, `dj_rest_auth` to `INSTALLED_APPS`.
+- Configure `SOCIALACCOUNT_PROVIDERS` for Google, GitHub, Microsoft.
+- Set `AUTH_AUTHENTICATION_CLASSES` to use JWT.
+
+### Backend APIs
+#### [NEW] [backend/users/urls.py](file:///d:/final year project/V/backend/users/urls.py)
+- Include `dj_rest_auth` URLs and social provider endpoints.
+
+### Frontend Pages
+#### [NEW] [frontend/app/auth/login/page.tsx](file:///d:/final year project/V/frontend/app/auth/login/page.tsx)
+- Modern UI with "Sign in with Google/GitHub/Microsoft" buttons.
+- Form handling for username/password login.
+
+#### [NEW] [frontend/app/auth/register/page.tsx](file:///d:/final year project/V/frontend/app/auth/register/page.tsx)
+- Registration form with validation (Confirm Password match).
+
+## Verification Plan
+
+### Manual Verification
+1.  **Standard Login**: Register a new user via frontend form and log in.
+2.  **Social Login**: Click "Login with Google" (will require valid Client ID).
+3.  **UI Check**: Verify responsive design and error handling on forms.
