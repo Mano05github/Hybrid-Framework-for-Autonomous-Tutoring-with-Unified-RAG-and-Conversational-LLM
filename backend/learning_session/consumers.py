@@ -30,7 +30,8 @@ class LearningSessionConsumer(AsyncWebsocketConsumer):
         if self.session_id not in telemetry_monitors:
             telemetry_monitors[self.session_id] = LightweightTelemetryMonitor()
             # Start session tracking (user_id would come from auth context)
-            user_id = self.scope.get('user', {}).get('id', 'anonymous')
+            user = self.scope.get('user')
+            user_id = user.id if user and hasattr(user, 'id') else 'anonymous'
             telemetry_monitors[self.session_id].start_session(user_id, self.session_id)
         
         self.telemetry_monitor = telemetry_monitors[self.session_id]
@@ -73,23 +74,28 @@ class LearningSessionConsumer(AsyncWebsocketConsumer):
             import tempfile
             import os
             try:
-                # 1. Save Bytes to Temp File
-                # Frontend now sends 16-bit PCM WAV (no ffmpeg needed)
+                # 1. Use Google Cloud STT directly (no temp file needed)
+                from ai_engine.stt import get_stt_engine
+                from google.cloud import speech
+                
+                # 2. Analyze Emotion (Async)
+                # Save to temp file only for emotion analysis
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_audio:
                     temp_audio.write(bytes_data)
                     temp_path = temp_audio.name
                 
-                # 2. Analyze Emotion (Async)
                 emotion_label = await sync_to_async(self.orchestrator.analyze_emotion)(temp_path)
                 
-                # 3. Transcribe Audio (STT) - NEW
-                from .stt_service import STTService
-                # Initialize STT Service (Lazy or Cached better, but here for safety)
-                # Ideally, self.stt_service should be in __init__, but imports might cycle.
-                stt = STTService() 
-                user_text = await sync_to_async(stt.transcribe)(temp_path)
+                # 3. Transcribe Audio with Google Cloud STT
+                stt_engine = get_stt_engine()
+                user_text = await sync_to_async(stt_engine.transcribe_audio)(
+                    audio_content=bytes_data,
+                    language_code="en-US",
+                    sample_rate=16000,
+                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16
+                )
 
-                # 4. Cleanup
+                # 4. Cleanup temp file
                 os.remove(temp_path)
                 
                 # 5. Process Conversation (if text found)
@@ -120,21 +126,53 @@ class LearningSessionConsumer(AsyncWebsocketConsumer):
             return
 
         if text_data:
+            print(f"📥 Received text message: {text_data[:200]}")  # Debug log
             text_data_json = json.loads(text_data)
             message = text_data_json.get('message')
             msg_type = text_data_json.get('type') 
             sub_type = text_data_json.get('event_type') 
+            print(f"📊 Message type: {msg_type}, sub_type: {sub_type}, message: {message}")  # Debug log 
 
             # 1. Handle Chat Messages (Trigger AI)
             if msg_type == "context_update" and sub_type == "chat_message":
                 # Call Orchestrator to get AI response (Wrapped in sync_to_async)
                 ai_text = await sync_to_async(self.orchestrator.get_ai_response)(message)
                 
+                # Get the agent intent and canvas commands from orchestrator context
+                intent = self.orchestrator.context.get('last_intent', None)
+                canvas_commands = self.orchestrator.context.get('last_canvas_commands', [])
+                
                 # Send AI Response back to Frontend
-                await self.send(text_data=json.dumps({
+                response_data = {
                     'message': ai_text,
-                    'type': 'ai_response' 
-                }))
+                    'type': 'teacher_response' if intent == 'teacher' else 'ai_response'
+                }
+                
+                # Include canvas commands if present
+                if canvas_commands and len(canvas_commands) > 0:
+                    response_data['canvas_commands'] = canvas_commands
+                    print(f"🎨 Sending {len(canvas_commands)} canvas commands to frontend")
+                
+                await self.send(text_data=json.dumps(response_data))
+
+                # Send page routing based on agent intent
+                if intent:
+                    view_mapping = {
+                        'teacher': 'canvas',
+                        'coder': 'editor',
+                        'examiner': 'assessment',
+                        'visionary': 'dashboard',
+                        'empath': 'voice'
+                    }
+                    
+                    target_view = view_mapping.get(intent)
+                    if target_view and target_view != 'voice':  # Don't redirect from voice page
+                        await self.send(text_data=json.dumps({
+                            'type': 'route_to_view',
+                            'view': target_view,
+                            'intent': intent
+                        }))
+                        print(f"🔀 Routing to {target_view} page based on {intent} intent")
 
                 # 2. Generate and Send Voice (TTS)
                 audio_bytes = await self.tts_service.generate_audio(ai_text)
@@ -240,6 +278,10 @@ class LearningSessionConsumer(AsyncWebsocketConsumer):
                 if self.telemetry_monitor.should_capture_snapshot():
                     snapshot = self.telemetry_monitor.get_snapshot()
                     
+                    # Skip if snapshot is None
+                    if not snapshot:
+                        continue
+                    
                     # Run heuristic analysis
                     telemetry_dict = {
                         'idle_time': snapshot.idle_time,
@@ -297,10 +339,3 @@ class LearningSessionConsumer(AsyncWebsocketConsumer):
             print(f"[Telemetry Stream] Error: {e}")
             import traceback
             traceback.print_exc()
-        event_type = event['event_type']
-
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps({
-            'message': message,
-            'type': event_type
-        }))

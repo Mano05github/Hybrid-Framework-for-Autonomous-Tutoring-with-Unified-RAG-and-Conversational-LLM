@@ -299,18 +299,40 @@ class VoiceWidget {
         }
     }
     
-    activateVoice() {
-        // Placeholder for voice activation
-        console.log('🎤 Voice activated: Listening for "Vanakkam Vaathiyarey"');
+    async activateVoice() {
+        // Prevent double-clicks
+        if (this.activating) {
+            console.log('⏳ Voice activation in progress...');
+            return;
+        }
         
-        // Visual feedback
-        this.widget.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            this.widget.style.transform = 'scale(1)';
-        }, 150);
+        this.activating = true;
         
-        // In production, this would trigger actual voice recognition
-        this.showListeningState();
+        try {
+            // Get or create session using session manager
+            const session = await window.sessionManager.getOrCreateSession();
+            console.log('✅ Session ready for voice:', session.id);
+            
+            // Visual feedback
+            this.widget.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.widget.style.transform = 'scale(1)';
+            }, 150);
+            
+            // Show listening state briefly
+            this.showListeningState();
+            
+            // Navigate to voice page with session ID
+            setTimeout(() => {
+                window.location.href = `voice.html?session_id=${session.id}`;
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ Failed to activate voice:', error);
+            alert('Failed to start voice session. Please try again.');
+        } finally {
+            this.activating = false;
+        }
     }
     
     showListeningState() {
@@ -425,11 +447,87 @@ async function loadDashboardData() {
 }
 
 // ===================================
+// SIDEBAR NAVIGATION
+// ===================================
+
+class SidebarNavigation {
+    constructor() {
+        this.navItems = document.querySelectorAll('.nav-item');
+        this.logoutBtn = document.getElementById('logoutBtn');
+        this.init();
+    }
+    
+    init() {
+        // Highlight current page
+        const currentPath = window.location.pathname;
+        this.navItems.forEach(item => {
+            const href = item.getAttribute('href');
+            if (href && (href === currentPath || currentPath.endsWith(href))) {
+                item.classList.add('active');
+            }
+        });
+        
+        // Handle logout
+        if (this.logoutBtn) {
+            this.logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+    }
+    
+    async handleLogout() {
+        try {
+            console.log('🚪 Logging out...');
+            
+            // Call logout API
+            const response = await fetch('/api/auth/logout/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                console.log('✅ Logout successful');
+                // Clear any stored session data
+                sessionStorage.clear();
+                localStorage.removeItem('auth_token');
+                // Redirect to login
+                window.location.href = '/login.html';
+            } else {
+                console.error('❌ Logout failed:', response.statusText);
+                // Force redirect anyway
+                window.location.href = '/login.html';
+            }
+        } catch (error) {
+            console.error('❌ Logout error:', error);
+            // Force redirect on error
+            window.location.href = '/login.html';
+        }
+    }
+    
+    getCsrfToken() {
+        const name = 'csrftoken';
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const trimmed = cookie.trim();
+            if (trimmed.startsWith(name + '=')) {
+                return trimmed.substring(name.length + 1);
+            }
+        }
+        return '';
+    }
+}
+
+// ===================================
 // INITIALIZATION
 // ===================================
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('📊 Initializing Dashboard...');
+    
+    // Initialize sidebar navigation
+    const sidebar = new SidebarNavigation();
     
     // Initialize particles background
     const particles = new ParticlesBackground('particles-bg');

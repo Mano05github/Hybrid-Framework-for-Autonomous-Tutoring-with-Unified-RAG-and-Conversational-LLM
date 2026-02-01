@@ -60,18 +60,31 @@ class SessionOrchestrator:
         
         # Swarm Logic: Delegate to the Agent Graph
         try:
-            from ai_engine.graph import app
+            from ai_engine.graph import get_graph
             from langchain_core.messages import HumanMessage
+            
+            # Get the compiled graph
+            app = get_graph()
             
             emotion_label = self.context.get('current_emotion', 'neutral')
             
             # 1. Build State
             inputs = {
                 "messages": [HumanMessage(content=user_message)],
+                "query": user_message,  # Required field for supervisor
+                "user_id": self.context.get('user_id', 'anonymous'),
+                "session_id": self.context.get('session_id', 'default'),
                 "user_emotion": emotion_label,
                 "current_topic": self.context.get('topic', 'General'),
                 "current_image": self.context.get('current_image', None), # Inject Image
-                "next_step": ""
+                "next_step": "",
+                "intent": "",
+                "confidence": 0.0,
+                "method": "",
+                "latency_ms": 0.0,
+                "complexity_score": None,
+                "next_agent": None,
+                "response": ""
             }
             
             # Clear image after one use to avoid stale seeing
@@ -81,6 +94,12 @@ class SessionOrchestrator:
             # 2. Invoke Swarm
             logger.info(f"Invoking Swarm for: {user_message[:50]}...")
             final_state = app.invoke(inputs)
+            
+            # Store intent in context for routing
+            self.context['last_intent'] = final_state.get('intent', None)
+            
+            # Store canvas commands if present (from teacher_agent)
+            self.context['last_canvas_commands'] = final_state.get('canvas_commands', [])
             
             # 3. Extract Response
             response_text = final_state['messages'][-1].content

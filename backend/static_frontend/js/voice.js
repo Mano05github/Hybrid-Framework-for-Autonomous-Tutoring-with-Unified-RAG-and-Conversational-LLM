@@ -16,15 +16,30 @@ class VoiceAssistant {
         this.sessionId = null;
         this.wsConnected = false;
         
+        // Audio recording properties
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+        this.audioContext = null;
+        this.audioStream = null;
+        
         this.init();
     }
     
     async init() {
-        // Start a learning session
+        // Get session from URL params or create new one
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionIdFromUrl = urlParams.get('session_id');
+        
+        // Start or reuse learning session
         try {
-            const session = await window.apiClient.startSession();
-            this.sessionId = session.id || session.session_id;
-            console.log('✅ Session started:', this.sessionId);
+            if (sessionIdFromUrl) {
+                this.sessionId = sessionIdFromUrl;
+                console.log('✅ Using session from URL:', this.sessionId);
+            } else {
+                const session = await window.sessionManager.getOrCreateSession();
+                this.sessionId = session.id || session.session_id;
+                console.log('✅ Session started:', this.sessionId);
+            }
             
             // Connect WebSocket
             window.wsClient.connect(this.sessionId);
@@ -36,7 +51,16 @@ class VoiceAssistant {
             });
             
             window.wsClient.onMessage((data) => {
-                this.handleAIMessage(data);
+                // Handle routing messages
+                if (data.type === 'route_to_view') {
+                    this.handlePageRouting(data);
+                } else {
+                    this.handleAIMessage(data);
+                }
+            });
+            
+            window.wsClient.onBinaryMessage((audioData) => {
+                this.playAudioResponse(audioData);
             });
             
             window.wsClient.onDisconnect(() => {
@@ -50,6 +74,16 @@ class VoiceAssistant {
         } catch (error) {
             console.error('❌ Failed to initialize session:', error);
         }
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (this.wsConnected) {
+                window.wsClient.disconnect();
+            }
+            if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                this.stopRecording();
+            }
+        });
         
         // Send button click
         this.sendBtn.addEventListener('click', () => this.sendMessage());
@@ -93,8 +127,9 @@ class VoiceAssistant {
         // Send via WebSocket if connected
         if (this.wsConnected) {
             window.wsClient.sendMessage({
-                type: 'text',
-                text: message,
+                type: 'context_update',
+                event_type: 'chat_message',
+                message: message,
                 session_id: this.sessionId
             });
         } else {
@@ -114,6 +149,33 @@ class VoiceAssistant {
         if (data.text || data.message) {
             this.addMessage('ai', data.text || data.message);
         }
+    }
+    
+    handlePageRouting(data) {
+        const { view, intent } = data;
+        console.log(`🔀 Routing to ${view} page (intent: ${intent})`);
+        
+        // Show notification before redirect
+        const notification = document.createElement('div');
+        notification.className = 'routing-notification';
+        notification.textContent = `Switching to ${view} mode...`;
+        document.body.appendChild(notification);
+        
+        // Redirect after brief delay
+        setTimeout(() => {
+            const routes = {
+                'canvas': `/canvas.html?session_id=${this.sessionId}`,
+                'editor': `/code-editor.html?session_id=${this.sessionId}`,
+                'assessment': `/assessment.html?session_id=${this.sessionId}`,
+                'dashboard': `/dashboard.html`,
+                'voice': `/voice.html?session_id=${this.sessionId}`
+            };
+            
+            const targetUrl = routes[view];
+            if (targetUrl) {
+                window.location.href = targetUrl;
+            }
+        }, 1000);
     }
     
     addMessage(role, text) {
@@ -190,6 +252,7 @@ class VoiceAssistant {
         
         if (this.isListening) {
             this.voiceToggleBtn.classList.add('active');
+            this.startRecording();
             console.log('🎤 Voice input activated');
             
             // Update waveform
@@ -198,12 +261,170 @@ class VoiceAssistant {
             }
         } else {
             this.voiceToggleBtn.classList.remove('active');
+            this.stopRecording();
             console.log('🎤 Voice input deactivated');
             
             // Update waveform
             if (window.waveformVisualizer) {
                 window.waveformVisualizer.setListening(false);
             }
+        }
+    }
+    
+    async startRecording() {
+        try {
+            // Request microphone access
+            this.audioStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                } 
+            });
+            
+            // Initialize audio context
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            
+            // Create MediaRecorder
+            this.mediaRecorder = new MediaRecorder(this.audioStream, {
+                mimeType: 'audio/webm;codecs=opus',
+                audioBitsPerSecond: 16000
+            });
+            
+            this.audioChunks = [];
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.audioChunks.push(event.data);
+                }
+            };
+            
+            this.mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                await this.sendAudioToBackend(audioBlob);
+                this.audioChunks = [];
+            };
+            
+            // Start recording
+            this.mediaRecorder.start();
+            console.log('🔴 Recording started');
+            
+        } catch (error) {
+            console.error('❌ Microphone access denied:', error);
+            this.isListening = false;
+            this.voiceToggleBtn.classList.remove('active');
+            alert('Please allow microphone access to use voice features.');
+        }
+    }
+    
+    stopRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+            this.mediaRecorder.stop();
+            console.log('⏹️ Recording stopped');
+        }
+        
+        // Stop audio tracks
+        if (this.audioStream) {
+            this.audioStream.getTracks().forEach(track => track.stop());
+            this.audioStream = null;
+        }
+    }
+    
+    async sendAudioToBackend(audioBlob) {
+        try {
+            // Convert WebM to ArrayBuffer
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            
+            // Convert to WAV format if needed (WebM → WAV conversion)
+            const wavBlob = await this.convertToWAV(arrayBuffer);
+            const wavArrayBuffer = await wavBlob.arrayBuffer();
+            
+            // Send binary audio via WebSocket
+            if (this.wsConnected) {
+                window.wsClient.sendBinary(wavArrayBuffer);
+                this.showTypingIndicator();
+            }
+        } catch (error) {
+            console.error('❌ Error sending audio:', error);
+        }
+    }
+    
+    async convertToWAV(webmArrayBuffer) {
+        // Decode WebM audio to PCM
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const audioBuffer = await audioContext.decodeAudioData(webmArrayBuffer);
+        
+        // Extract PCM data (mono, 16-bit)
+        const channelData = audioBuffer.getChannelData(0); // Get mono channel
+        const pcmData = new Int16Array(channelData.length);
+        
+        // Convert float32 to int16
+        for (let i = 0; i < channelData.length; i++) {
+            const s = Math.max(-1, Math.min(1, channelData[i]));
+            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        
+        // Create WAV file
+        const wavBuffer = this.encodeWAV(pcmData, 16000, 1);
+        return new Blob([wavBuffer], { type: 'audio/wav' });
+    }
+    
+    encodeWAV(samples, sampleRate, numChannels) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+        
+        // WAV header
+        this.writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        this.writeString(view, 8, 'WAVE');
+        this.writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true); // Subchunk1Size
+        view.setUint16(20, 1, true); // AudioFormat (PCM)
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * numChannels * 2, true); // ByteRate
+        view.setUint16(32, numChannels * 2, true); // BlockAlign
+        view.setUint16(34, 16, true); // BitsPerSample
+        this.writeString(view, 36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+        
+        // Write PCM samples
+        const offset = 44;
+        for (let i = 0; i < samples.length; i++) {
+            view.setInt16(offset + i * 2, samples[i], true);
+        }
+        
+        return buffer;
+    }
+    
+    writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+    
+    async playAudioResponse(audioArrayBuffer) {
+        try {
+            // Create audio context if not exists
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Decode audio data
+            const audioBuffer = await this.audioContext.decodeAudioData(audioArrayBuffer);
+            
+            // Create audio source
+            const source = this.audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(this.audioContext.destination);
+            
+            // Play audio
+            source.start(0);
+            console.log('🔊 Playing TTS audio response');
+            
+        } catch (error) {
+            console.error('❌ Error playing audio:', error);
         }
     }
     

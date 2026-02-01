@@ -34,6 +34,73 @@
         <div class="ambient-glow glow-2"></div>
     </div>
 
+    <!-- Sidebar Navigation -->
+    <nav class="app-sidebar">
+        <div class="sidebar-header">
+            <h1 class="sidebar-logo">Vaathiyar</h1>
+            <p class="sidebar-tagline">AI Learning Platform</p>
+        </div>
+        
+        <div class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="dashboard">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            
+            <a href="voice.html" class="nav-item" data-page="agent">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                <span class="nav-text">Agent</span>
+            </a>
+            
+            <a href="canvas.html" class="nav-item" data-page="vaathiyar">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                <span class="nav-text">Vaathiyar</span>
+            </a>
+            
+            <a href="assessment.html" class="nav-item" data-page="assessments">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                <span class="nav-text">Assessments</span>
+            </a>
+            
+            <a href="editor.html" class="nav-item" data-page="practice">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+                <span class="nav-text">Practice</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <button class="logout-btn" id="logoutBtn">
+                <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span class="logout-text">Logout</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Main Dashboard Container -->
     <div class="dashboard-container">
         
@@ -43,18 +110,6 @@
                 <h2 class="welcome-text">Ready to continue your learning journey?</h2>
             </div>
         </header>
-
-        <!-- Learning Session Prompt -->
-        <section class="learning-session-card">
-            <h1 class="session-title">Start Your Learning Session</h1>
-            <p class="session-subtitle">Vaathiyar is waiting to teach you. Speak your topic and begin.</p>
-            <button class="voice-activate-btn" id="voiceActivateBtn">
-                <div class="waveform-container" id="waveformContainer">
-                    <canvas id="waveform-canvas"></canvas>
-                </div>
-                <span class="btn-text">Activate Voice</span>
-            </button>
-        </section>
 
         <!-- Statistics Grid -->
         <section class="stats-grid">
@@ -252,16 +307,6 @@
                     <p class="profile-email user-email">user@example.com</p>
                 </div>
             </div>
-
-            <!-- Logout Button -->
-            <button class="logout-btn" onclick="AuthGuard.logout()" style="max-width: 200px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                Logout
-            </button>
         </section>
             <div class="bottom-stat">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -298,7 +343,7 @@
         </div>
     </div>
 
-    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/session-manager.js"></script>
     <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

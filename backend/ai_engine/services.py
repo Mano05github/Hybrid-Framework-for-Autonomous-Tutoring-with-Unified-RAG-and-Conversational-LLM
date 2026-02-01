@@ -4,34 +4,38 @@ from google.genai import types
 from django.conf import settings
 from .models import KnowledgeChunk
 import logging
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
-# Initialize centralized client
+# Initialize centralized clients
 api_key = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=api_key) if api_key else None
+
+# Initialize local embedding model (768 dimensions, matches existing database)
+_embedding_model = None
+
+def get_embedding_model():
+    """Lazy load sentence transformer model"""
+    global _embedding_model
+    if _embedding_model is None:
+        logger.info("Loading paraphrase-mpnet-base-v2 embedding model...")
+        _embedding_model = SentenceTransformer('paraphrase-mpnet-base-v2')
+        logger.info("✅ Embedding model loaded successfully (768 dimensions)")
+    return _embedding_model
 
 class EmbeddingService:
     @staticmethod
     def get_embedding(text, task_type="retrieval_document"):
         """
-        Generates embedding using Gemini text-embedding-004.
-        Returns a list of 768 floats.
+        Generates embedding using paraphrase-mpnet-base-v2 (local, no API key needed).
+        Returns a list of 768 floats - compatible with existing database.
         """
-        if not client:
-            return []
-            
         try:
-            # New SDK usage for embeddings
-            result = client.models.embed_content(
-                model="text-embedding-004",
-                contents=text,
-                config=types.EmbedContentConfig(
-                    task_type=task_type,
-                    title=None
-                )
-            )
-            return result.embeddings[0].values
+            model = get_embedding_model()
+            # encode returns numpy array, convert to list
+            embedding = model.encode(text, convert_to_tensor=False)
+            return embedding.tolist()
         except Exception as e:
             logger.error(f"Error generating embedding: {e}")
             return []

@@ -6,8 +6,14 @@ class CodeEditor {
     constructor() {
         this.editor = null;
         this.sessionId = null;
+        this.wsConnected = false;
         this.currentProblemId = null;
         this.currentHintLevel = 0;
+        this.keystrokeCount = 0;
+        this.errorCount = 0;
+        this.lastKeystrokeTime = Date.now();
+        this.telemetryInterval = null;
+        
         this.defaultCode = `# Binary Search Tree Implementation
 class Node:
     def __init__(self, key):
@@ -35,20 +41,17 @@ print("Node created with value:", root.val)
         // Initialize Monaco Editor
         this.initMonaco();
         
-        // Initialize session for tracking
-        try {
-            const session = await window.apiClient.startSession();
-            this.sessionId = session.id || session.session_id;
-            console.log('✅ Session started:', this.sessionId);
-        } catch (error) {
-            console.warn('⚠️ Failed to start session:', error);
-        }
+        // Initialize session and WebSocket
+        await this.initSession();
         
         // Button event listeners
         this.runBtn.addEventListener('click', () => this.runCode());
         this.hintBtn.addEventListener('click', () => this.showHint());
         this.resetBtn.addEventListener('click', () => this.resetCode());
         this.clearOutputBtn.addEventListener('click', () => this.clearOutput());
+        
+        // Add Submit for Review button
+        this.addSubmitButton();
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -63,6 +66,53 @@ print("Node created with value:", root.val)
                 this.showHint();
             }
         });
+    }
+    
+    async initSession() {
+        try {
+            // Start session
+            const session = await window.apiClient.startSession();
+            this.sessionId = session.id || session.session_id;
+            console.log('✅ Editor session started:', this.sessionId);
+            
+            // Connect WebSocket
+            window.wsClient.connect(this.sessionId);
+            
+            window.wsClient.onConnect(() => {
+                this.wsConnected = true;
+                console.log('✅ Editor WebSocket connected');
+                this.startTelemetryTracking();
+            });
+            
+            window.wsClient.onMessage((data) => {
+                this.handleTelemetryUpdate(data);
+            });
+            
+            window.wsClient.onDisconnect(() => {
+                this.wsConnected = false;
+                console.log('⚠️ Editor WebSocket disconnected');
+            });
+            
+        } catch (error) {
+            console.warn('⚠️ Failed to start editor session:', error);
+        }
+    }
+    
+    startTelemetryTracking() {
+        // Send telemetry updates every 5 seconds
+        this.telemetryInterval = setInterval(() => {
+            if (this.wsConnected && this.keystrokeCount > 0) {
+                window.wsClient.sendMessage({
+                    type: 'telemetry_event',
+                    event_type: 'keypress',
+                    data: {
+                        keystroke_count: this.keystrokeCount,
+                        time_since_last: Date.now() - this.lastKeystrokeTime
+                    }
+                });
+                this.keystrokeCount = 0;
+            }
+        }, 5000);
     }
     
     initMonaco() {
@@ -94,7 +144,25 @@ print("Node created with value:", root.val)
                 }
             });
             
-            console.log('✨ Monaco Editor initialized');
+            // Track keystrokes for telemetry
+            this.editor.onDidChangeModelContent(() => {
+                this.keystrokeCount++;
+                this.lastKeystrokeTime = Date.now();
+                
+                // Send code changes to WebSocket (debounced)
+                if (this.wsConnected) {
+                    clearTimeout(this.codeChangeTimeout);
+                    this.codeChangeTimeout = setTimeout(() => {
+                        window.wsClient.sendMessage({
+                            type: 'context_update',
+                            event_type: 'code_change',
+                            message: this.editor.getValue()
+                        });
+                    }, 2000);
+                }
+            });
+            
+            console.log('✨ Monaco Editor initialized with telemetry tracking');
         });
     }
     
@@ -120,6 +188,19 @@ print("Node created with value:", root.val)
             } else if (result.error) {
                 this.showOutput(`Error: ${result.error}`, 'error');
                 this.updateStatus('error');
+                this.errorCount++;
+                
+                // Send error telemetry
+                if (this.wsConnected) {
+                    window.wsClient.sendMessage({
+                        type: 'telemetry_event',
+                        event_type: 'error',
+                        data: {
+                            error_message: result.error,
+                            code_length: code.length
+                        }
+                    });
+                }
             } else {
                 this.showOutput('Code executed successfully (no output)', 'success');
                 this.updateStatus('success');
@@ -127,6 +208,7 @@ print("Node created with value:", root.val)
         } catch (error) {
             this.showOutput(`Error: ${error.message}`, 'error');
             this.updateStatus('error');
+            this.errorCount++;
             console.error('Code execution error:', error);
         }
     }
@@ -192,8 +274,189 @@ print("Node created with value:", root.val)
             this.editor.setValue(this.defaultCode);
             this.clearOutput();
             this.updateStatus('ready');
+            this.keystrokeCount = 0;
+            this.errorCount = 0;
             console.log('🔄 Code reset');
         }
+    }
+    
+    addSubmitButton() {
+        // Add Submit for Review button next to existing buttons
+        const submitBtn = document.createElement('button');
+        submitBtn.className = 'editor-btn';
+        submitBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+            </svg>
+            <span>Submit for Review</span>
+        `;
+        submitBtn.title = 'Submit code for Gap 3 Socratic analysis';
+        submitBtn.addEventListener('click', () => this.submitForReview());
+        
+        const toolbar = document.querySelector('.editor-toolbar');
+        toolbar.appendChild(submitBtn);
+    }
+    
+    async submitForReview() {
+        const code = this.editor.getValue();
+        
+        if (!code.trim()) {
+            alert('Please write some code before submitting for review.');
+            return;
+        }
+        
+        this.showOutput('Submitting code for Gap 3 Socratic analysis...', 'info');
+        
+        try {
+            // Call Gap 3 code submission endpoint
+            const result = await window.apiClient.submitCodeForReview(
+                code, 
+                this.sessionId,
+                this.currentProblemId || 'general_practice'
+            );
+            
+            if (result.feedback) {
+                this.showOutput(`Gap 3 Socratic Analysis:\n\n${result.feedback}`, 'success');
+            } else {
+                this.showOutput('Code submitted successfully. No specific feedback at this time.', 'success');
+            }
+            
+        } catch (error) {
+            this.showOutput(`Failed to submit code: ${error.message}`, 'error');
+            console.error('Code submission error:', error);
+        }
+    }
+    
+    handleTelemetryUpdate(data) {
+        if (data.type === 'telemetry_update') {
+            // Display telemetry alerts from Gap 5
+            const metrics = data.metrics || {};
+            const alerts = data.alerts || [];
+            
+            if (alerts.length > 0) {
+                alerts.forEach(alert => {
+                    this.showTelemetryAlert(alert);
+                });
+            }
+            
+            console.log('📊 Telemetry Update:', metrics);
+        } else if (data.type === 'pause_detected') {
+            this.showTelemetryAlert({
+                type: 'pause',
+                severity: 'info',
+                message: data.message || 'Pause detected - take your time to think through the problem.',
+                recommendation: 'Consider reviewing the problem requirements or requesting a hint.'
+            });
+        }
+    }
+    
+    showTelemetryAlert(alert) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `telemetry-alert ${alert.severity || 'info'}`;
+        alertDiv.innerHTML = `
+            <div class="alert-content">
+                <div class="alert-icon">
+                    ${alert.severity === 'warning' ? '⚠️' : alert.severity === 'error' ? '❌' : 'ℹ️'}
+                </div>
+                <div class="alert-body">
+                    <div class="alert-title">${alert.type || 'Telemetry Alert'}</div>
+                    <div class="alert-message">${alert.message}</div>
+                    ${alert.recommendation ? `<div class="alert-recommendation">💡 ${alert.recommendation}</div>` : ''}
+                </div>
+                <button class="alert-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+        
+        // Add styles if not present
+        if (!document.getElementById('telemetry-alert-styles')) {
+            const style = document.createElement('style');
+            style.id = 'telemetry-alert-styles';
+            style.textContent = `
+                .telemetry-alert {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    max-width: 400px;
+                    z-index: 1000;
+                    animation: slideUp 0.3s ease;
+                }
+                .alert-content {
+                    background: rgba(0, 0, 0, 0.95);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(0, 212, 255, 0.3);
+                    border-radius: 12px;
+                    padding: 20px;
+                    display: flex;
+                    gap: 15px;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                }
+                .telemetry-alert.warning .alert-content {
+                    border-color: rgba(255, 165, 0, 0.5);
+                }
+                .telemetry-alert.error .alert-content {
+                    border-color: rgba(255, 0, 0, 0.5);
+                }
+                .alert-icon {
+                    font-size: 24px;
+                }
+                .alert-body {
+                    flex: 1;
+                    color: white;
+                }
+                .alert-title {
+                    font-weight: 600;
+                    margin-bottom: 5px;
+                    text-transform: capitalize;
+                    color: #00d4ff;
+                }
+                .alert-message {
+                    font-size: 14px;
+                    line-height: 1.5;
+                    margin-bottom: 8px;
+                }
+                .alert-recommendation {
+                    font-size: 13px;
+                    font-style: italic;
+                    color: rgba(255, 255, 255, 0.8);
+                }
+                .alert-close {
+                    background: none;
+                    border: none;
+                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 0;
+                    width: 24px;
+                    height: 24px;
+                    align-self: flex-start;
+                }
+                .alert-close:hover {
+                    color: white;
+                }
+                @keyframes slideUp {
+                    from {
+                        transform: translateY(100px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(alertDiv);
+        
+        // Auto-remove after 15 seconds
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.remove();
+            }
+        }, 15000);
+    }
     }
     
     clearOutput() {

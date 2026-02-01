@@ -5,9 +5,14 @@
 class AssessmentController {
     constructor() {
         this.currentQuestionIndex = 0;
-        this.totalQuestions = 10;
-        this.selectedAnswers = new Array(this.totalQuestions).fill(null);
-        this.reasonings = new Array(this.totalQuestions).fill('');
+        this.totalQuestions = 0;
+        this.selectedAnswers = [];
+        this.reasonings = [];
+        this.questions = [];
+        this.sessionId = null;
+        this.quizId = null;
+        this.startTime = null;
+        this.questionStartTimes = [];
         
         // DOM elements
         this.mcqContent = document.getElementById('mcqContent');
@@ -25,13 +30,16 @@ class AssessmentController {
         this.progressPercentSpan = document.getElementById('progressPercent');
         this.progressFill = document.getElementById('progressFill');
         
-        // Sample questions (in production, these would come from backend)
-        this.questions = this.generateSampleQuestions();
-        
         this.init();
     }
     
-    init() {
+    async init() {
+        // Start session
+        await this.initSession();
+        
+        // Load questions from backend
+        await this.loadQuestions();
+        
         // Mode switcher
         this.modeBtns.forEach(btn => {
             btn.addEventListener('click', () => this.switchMode(btn.dataset.mode));
@@ -53,7 +61,89 @@ class AssessmentController {
         });
         
         // Initialize display
+        this.startTime = Date.now();
+        this.questionStartTimes[this.currentQuestionIndex] = Date.now();
         this.updateDisplay();
+    }
+    
+    async initSession() {
+        try {
+            const session = await window.apiClient.startSession();
+            this.sessionId = session.id || session.session_id;
+            console.log('✅ Assessment session started:', this.sessionId);
+            
+            // Connect WebSocket for quiz results
+            window.wsClient.connect(this.sessionId);
+            window.wsClient.onConnect(() => {
+                console.log('✅ WebSocket connected for assessment');
+            });
+        } catch (error) {
+            console.error('❌ Failed to start session:', error);
+        }
+    }
+    
+    async loadQuestions() {
+        try {
+            // Get topic from URL params or use default
+            const urlParams = new URLSearchParams(window.location.search);
+            const topicId = urlParams.get('topic') || '1';
+            
+            // Try to load quiz from backend
+            const response = await window.apiClient.request(`/api/core/quizzes/?topic_id=${topicId}`);
+            
+            if (response && response.length > 0) {
+                const quiz = response[0];
+                this.quizId = quiz.id;
+                this.questions = quiz.questions || [];
+                this.totalQuestions = this.questions.length;
+                
+                console.log(`✅ Loaded ${this.totalQuestions} questions from backend`);
+            } else {
+                // Fallback to generated questions if API returns empty
+                console.warn('⚠️ No questions from API, generating fallback questions');
+                await this.generateQuestionsFromExaminer();
+            }
+            
+            // Initialize arrays
+            this.selectedAnswers = new Array(this.totalQuestions).fill(null);
+            this.reasonings = new Array(this.totalQuestions).fill('');
+            this.questionStartTimes = new Array(this.totalQuestions).fill(null);
+            
+        } catch (error) {
+            console.error('❌ Failed to load questions:', error);
+            // Fallback to sample questions
+            this.questions = this.generateSampleQuestions();
+            this.totalQuestions = this.questions.length;
+            this.selectedAnswers = new Array(this.totalQuestions).fill(null);
+            this.reasonings = new Array(this.totalQuestions).fill('');
+            this.questionStartTimes = new Array(this.totalQuestions).fill(null);
+        }
+    }
+    
+    async generateQuestionsFromExaminer() {
+        try {
+            // Call Examiner Agent to generate quiz
+            const response = await window.apiClient.request('/api/gaps/generate-quiz/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    topic: 'General Programming',
+                    difficulty: 'medium',
+                    count: 10
+                })
+            });
+            
+            if (response && response.questions) {
+                this.questions = response.questions;
+                this.totalQuestions = this.questions.length;
+                console.log('✅ Generated questions from Examiner Agent');
+            } else {
+                throw new Error('Examiner Agent returned no questions');
+            }
+        } catch (error) {
+            console.error('❌ Examiner Agent failed, using sample questions:', error);
+            this.questions = this.generateSampleQuestions();
+            this.totalQuestions = this.questions.length;
+        }
     }
     
     switchMode(mode) {
@@ -88,6 +178,7 @@ class AssessmentController {
     previousQuestion() {
         if (this.currentQuestionIndex > 0) {
             this.currentQuestionIndex--;
+            this.questionStartTimes[this.currentQuestionIndex] = Date.now();
             this.updateDisplay();
         }
     }
@@ -95,6 +186,7 @@ class AssessmentController {
     nextQuestion() {
         if (this.currentQuestionIndex < this.totalQuestions - 1) {
             this.currentQuestionIndex++;
+            this.questionStartTimes[this.currentQuestionIndex] = Date.now();
             this.updateDisplay();
         }
     }
@@ -142,7 +234,7 @@ class AssessmentController {
         }
     }
     
-    submitAssessment() {
+    async submitAssessment() {
         // Count answered questions
         const answeredCount = this.selectedAnswers.filter(answer => answer !== null).length;
         
@@ -153,22 +245,70 @@ class AssessmentController {
             }
         }
         
-        // Calculate score (in production, this would be done on backend)
+        // Calculate score
         let score = 0;
+        const results = [];
+        
         this.selectedAnswers.forEach((answer, index) => {
-            if (answer === this.questions[index].correct) {
-                score++;
-            }
+            const question = this.questions[index];
+            const isCorrect = answer === question.correct;
+            if (isCorrect) score++;
+            
+            results.push({
+                question_id: question.id || index,
+                selected_answer: answer,
+                correct_answer: question.correct,
+                is_correct: isCorrect,
+                reasoning: this.reasonings[index]
+            });
         });
         
+        const totalTime = Math.round((Date.now() - this.startTime) / 1000); // seconds
         const percentage = Math.round((score / this.totalQuestions) * 100);
         
-        alert(`Assessment submitted!\n\nScore: ${score}/${this.totalQuestions} (${percentage}%)\n\nYou will be redirected to the dashboard.`);
+        // Submit to backend and send via WebSocket
+        try {
+            // Submit results via API (if endpoint exists)
+            /*
+            await window.apiClient.request('/api/core/quiz-results/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    quiz_id: this.quizId,
+                    session_id: this.sessionId,
+                    score: score,
+                    total: this.totalQuestions,
+                    time_taken: totalTime,
+                    results: results
+                })
+            });
+            */
+            
+            // Send quiz result via WebSocket for AI analysis
+            if (window.wsClient.isConnected()) {
+                window.wsClient.sendMessage({
+                    type: 'quiz_result',
+                    correct_count: score,
+                    total: this.totalQuestions,
+                    time_taken: totalTime,
+                    results: results
+                });
+                console.log('✅ Quiz results sent to AI for analysis');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to submit quiz results:', error);
+        }
         
-        // In production, send results to backend and redirect
-        console.log('Answers:', this.selectedAnswers);
-        console.log('Reasonings:', this.reasonings);
-        console.log('Score:', score, '/', this.totalQuestions);
+        // Show results
+        alert(`Assessment submitted!\n\nScore: ${score}/${this.totalQuestions} (${percentage}%)\nTime: ${Math.floor(totalTime / 60)}m ${totalTime % 60}s\n\nYou will be redirected to the dashboard.`);
+        
+        console.log('Quiz Results:', {
+            score,
+            total: this.totalQuestions,
+            percentage,
+            time: totalTime,
+            results
+        });
         
         // Redirect to dashboard
         setTimeout(() => {

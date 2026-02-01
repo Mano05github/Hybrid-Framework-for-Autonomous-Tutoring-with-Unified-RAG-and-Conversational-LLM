@@ -18,6 +18,17 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 import learning_session.routing 
 
+# Warm up Ollama in background
+from llm_engine.warmup import warmup_ollama_async, check_ollama_health
+
+# Check Ollama health and start warmup
+is_healthy, models = check_ollama_health()
+if is_healthy:
+    print(f"✅ Ollama is running with models: {models}")
+    warmup_ollama_async()
+else:
+    print("⚠️ Ollama is not running. Start it with 'ollama serve'")
+
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(

@@ -1,10 +1,14 @@
 django>=5.0
 djangorestframework
+channels>=4.0
+channels-redis
+daphne
 psycopg2-binary
 pgvector
 openai
 google-generativeai
 google-cloud-texttospeech>=2.14.0   # Google Cloud TTS
+google-cloud-speech>=2.20.0         # Google Cloud STT
 langchain
 langchain-community
 python-dotenv

@@ -190,3 +190,6 @@ if __name__ == "__main__":
     print("\n[Graph] Ready for integration")
     # print("[Graph] Train SetFit classifier before first use:")
     # print("  python -m ai_engine.supervisor.classifier")
+
+# Export app as an alias for convenience (for backwards compatibility)
+app = get_graph

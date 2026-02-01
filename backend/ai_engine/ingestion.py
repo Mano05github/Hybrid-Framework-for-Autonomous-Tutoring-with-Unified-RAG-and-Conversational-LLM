@@ -24,6 +24,10 @@ class IngestionService:
             return 0
 
         for chunk_text in chunks:
+            # Skip empty or too short chunks
+            if not chunk_text or len(chunk_text.strip()) < 10:
+                continue
+                
             vector = EmbeddingService.get_embedding(chunk_text)
             if not vector:
                 continue

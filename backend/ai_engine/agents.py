@@ -82,6 +82,7 @@ def supervisor_agent(state: AgentState) -> AgentState:
     Enhanced Supervisor Agent V2.0
     
     Routing Pipeline:
+    0. **FAST PATH: Instant Keyword Routing** (< 1ms - skip all processing)
     1. Dialogue Context Resolution (if applicable)
     2. Semantic Cache Check (5ms cache hits)
     3. Complexity Analysis (0-100 scoring)
@@ -93,13 +94,80 @@ def supervisor_agent(state: AgentState) -> AgentState:
     - 99% cost reduction ($0.002 → $0.00002)
     - 68% cache hit rate expected
     - Context-aware routing with dialogue state
+    - FAST PATH: < 1ms for navigation queries (teach/code/test keywords)
     """
     start_time = time.perf_counter()
     
-    # Load components
+    query = state["query"]
+    query_lower = query.lower()
+    
+    # ============ FAST PATH: Instant Keyword Routing ============
+    # Skip expensive processing for clear navigation queries
+    # This eliminates 8+ second waits in voice page for "teach me X" queries
+    
+    # Teacher keywords (canvas page) - learning/explanation queries
+    teacher_keywords = ['teach', 'learn', 'explain', 'tutorial', 'lesson', 'show me', 'tell me about']
+    # Coder keywords (editor page) - coding/practice queries
+    coder_keywords = ['code', 'write', 'implement', 'practice', 'program', 'develop', 'build']
+    # Examiner keywords (assessment page) - testing/evaluation queries
+    examiner_keywords = ['test', 'quiz', 'assess', 'exam', 'evaluate', 'check my knowledge']
+    
+    instant_intent = None
+    matched_keyword = None
+    
+    # Check for teacher keywords
+    for keyword in teacher_keywords:
+        if keyword in query_lower:
+            instant_intent = 'teacher'
+            matched_keyword = keyword
+            break
+    
+    # Check for coder keywords
+    if not instant_intent:
+        for keyword in coder_keywords:
+            if keyword in query_lower:
+                instant_intent = 'coder'
+                matched_keyword = keyword
+                break
+    
+    # Check for examiner keywords
+    if not instant_intent:
+        for keyword in examiner_keywords:
+            if keyword in query_lower:
+                instant_intent = 'examiner'
+                matched_keyword = keyword
+                break
+    
+    # If instant match found, skip all expensive processing
+    if instant_intent:
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        
+        print(f"\n{'='*80}")
+        print(f"[Supervisor V2.0 - FAST PATH] Query: '{query[:60]}...'")
+        print(f"{'='*80}")
+        print(f"[Keyword Match] '{matched_keyword}' → {instant_intent}")
+        print(f"[Routing Decision - INSTANT]")
+        print(f"  Intent:     {instant_intent}")
+        print(f"  Confidence: 0.95 (keyword match)")
+        print(f"  Method:     instant_keyword")
+        print(f"  Latency:    {latency_ms:.1f}ms (⚡ FAST PATH)")
+        print(f"{'='*80}\n")
+        
+        # Update state and route immediately
+        state["intent"] = instant_intent
+        state["confidence"] = 0.95  # High confidence for keyword matches
+        state["method"] = "instant_keyword"
+        state["latency_ms"] = latency_ms
+        state["complexity_score"] = 30  # Assume medium complexity
+        state["next_agent"] = instant_intent
+        
+        return state  # Return immediately - skip RAG/LLM processing
+    
+    # ============ END FAST PATH ============
+    
+    # Load components (only if not fast path)
     classifier, cache, complexity_analyzer, dialogue_tracker = get_supervisor_components()
     
-    query = state["query"]
     user_id = state.get("user_id", "anonymous")
     session_id = state.get("session_id", f"{user_id}_default")
     
@@ -159,7 +227,7 @@ def supervisor_agent(state: AgentState) -> AgentState:
     state["confidence"] = confidence
     state["method"] = method
     state["latency_ms"] = latency_ms
-    state["complexity_score"] = complexity_metrics.score if 'complexity_metrics' in locals() else None
+    state["complexity_score"] = complexity_metrics.score if 'complexity_metrics' in locals() else 50  # Default to medium
     
     # Track turn in dialogue state
     dialogue_tracker.track_turn(
@@ -195,6 +263,11 @@ def teacher_agent(state: AgentState) -> AgentState:
     
     query = state["query"]
     complexity_score = state.get("complexity_score", 50)
+    
+    # Handle None explicitly (can happen with cache hits or fast path)
+    if complexity_score is None:
+        complexity_score = 50  # Default to medium complexity
+    
     user_id = state.get("user_id", "anonymous")
     
     print(f"\n{'='*80}")
@@ -203,83 +276,194 @@ def teacher_agent(state: AgentState) -> AgentState:
     print(f"{'='*80}")
     
     try:
-        # Step 1: Retrieve relevant context using Omni-RAG
-        omni_rag = get_omni_rag()
-        rag_response = omni_rag.retrieve(
-            query=query,
-            complexity_score=complexity_score,
-            user_context={"user_id": user_id}
-        )
+        # PARALLEL PROCESSING: RAG + LLM simultaneously
+        import threading
+        from ai_engine.services import EmbeddingService, RAGService
+        from ai_engine.visual_generator import VisualExplanationGenerator, should_generate_visual
         
-        rag_latency = (time.perf_counter() - start_time) * 1000
+        # Generate query embedding
+        query_embedding = EmbeddingService.get_embedding(query, task_type="retrieval_query")
         
-        print(f"\n[RAG Retrieval]")
-        print(f"  Strategy:  {rag_response.strategy.value}")
-        print(f"  Chunks:    {len(rag_response.context_used)}")
-        print(f"  Confidence: {rag_response.confidence:.2f}")
-        print(f"  Latency:   {rag_latency:.1f}ms")
-        
-        if rag_response.sources:
-            print(f"  Sources:   {', '.join(rag_response.sources[:3])}")
-        
-        # Step 2: Format context for LLM
-        if rag_response.strategy == RAGStrategy.NO_RAG:
-            # Simple greeting or social query - direct LLM response
-            llm_context = ""
-            system_instruction = (
-                "You are a friendly AI teaching assistant. "
-                "Respond naturally to social queries and greetings."
-            )
+        # Determine retrieval strategy based on complexity
+        if complexity_score < 20:
+            strategy = "no_rag"
+            top_k = 0
+        elif complexity_score < 50:
+            strategy = "single_hop"
+            top_k = 3
         else:
-            # RAG-enhanced response
-            llm_context = omni_rag.format_context_for_llm(rag_response)
-            system_instruction = (
-                f"You are an expert teacher specializing in algorithms and data structures. "
-                f"Use the following retrieved knowledge to answer the student's question accurately. "
-                f"\n\n{llm_context}\n\n"
-                f"Instructions:\n"
-                f"1. Base your answer ONLY on the provided knowledge\n"
-                f"2. Cite sources when mentioning specific facts\n"
-                f"3. If the knowledge doesn't fully answer the question, say so\n"
-                f"4. Explain concepts clearly for students\n"
-                f"5. Use examples when helpful\n\n"
-                f"Student Question: {query}"
-            )
+            strategy = "multi_hop"
+            top_k = 5
         
-        # Step 3: Generate response with LLM
-        llm_start = time.perf_counter()
+        # Shared results container for thread-safe communication
+        rag_result = {
+            "completed": False,
+            "chunks": [],
+            "latency": 0,
+            "strategy": strategy
+        }
+        
+        def retrieve_rag_context():
+            """Background thread: Retrieve RAG context"""
+            try:
+                rag_start = time.perf_counter()
+                
+                if strategy == "no_rag":
+                    chunks = []
+                else:
+                    chunks = RAGService.get_context(query_embedding, top_k=top_k)
+                
+                rag_latency = (time.perf_counter() - rag_start) * 1000
+                
+                rag_result["chunks"] = chunks
+                rag_result["latency"] = rag_latency
+                rag_result["completed"] = True
+                
+                print(f"\n[RAG Thread] Retrieved {len(chunks)} chunks in {rag_latency:.1f}ms")
+            except Exception as e:
+                print(f"[RAG Thread ERROR] {e}")
+                rag_result["completed"] = True  # Mark complete even on error
+        
+        # Step 1: Start RAG retrieval in background (non-blocking)
+        print(f"\n[Teacher Agent] PARALLEL MODE: Starting RAG + LLM simultaneously")
+        rag_thread = threading.Thread(target=retrieve_rag_context, daemon=True)
+        rag_thread.start()
+        
+        # Step 2: Generate IMMEDIATE base response (uses LLaMA's built-in knowledge)
+        base_start = time.perf_counter()
         llm_provider = LLMFactory.get_provider()
         
-        response = llm_provider.generate_response(
-            prompt=query,
-            system_instruction=system_instruction
+        base_system = (
+            "You are an expert teacher. Provide a clear, concise answer "
+            "using your knowledge. Keep it brief (2-3 sentences) as this may be "
+            "enhanced with additional context shortly."
         )
         
-        llm_latency = (time.perf_counter() - llm_start) * 1000
+        print(f"[LLM] Generating base response (no wait for RAG)...")
+        base_response = llm_provider.generate_response(
+            prompt=query,
+            system_instruction=base_system
+        )
+        
+        base_latency = (time.perf_counter() - base_start) * 1000
+        print(f"[LLM] Base response ready in {base_latency:.1f}ms")
+        
+        # Step 3: Wait for RAG (max 2 seconds)
+        rag_thread.join(timeout=2.0)
+        
+        retrieved_chunks = rag_result["chunks"]
+        rag_latency = rag_result["latency"]
+        
+        print(f"\n[RAG Retrieval - Django pgvector]")
+        print(f"  Strategy:  {strategy}")
+        print(f"  Chunks:    {len(retrieved_chunks)}")
+        print(f"  Latency:   {rag_latency:.1f}ms")
+        print(f"  Completed: {rag_result['completed']}")
+        
+        # Step 4: Enhance response with RAG if available
+        if len(retrieved_chunks) > 0 and rag_result["completed"]:
+            # RAG-enhanced response
+            formatted_chunks = []
+            for idx, chunk in enumerate(retrieved_chunks, 1):
+                topic_name = chunk.topic.title if chunk.topic else "General"
+                formatted_chunks.append(
+                    f"[Source {idx} - {topic_name}]\n{chunk.content}\n"
+                )
+            
+            llm_context = "\n".join(formatted_chunks)
+            print(f"  Sources:   {', '.join([c.topic.title if c.topic else 'General' for c in retrieved_chunks[:3]])}")
+            
+            enhance_start = time.perf_counter()
+            enhanced_system = (
+                f"You previously answered: '{base_response}'\n\n"
+                f"Now EXPAND and ENHANCE your answer using this retrieved knowledge:\n{llm_context}\n\n"
+                f"Instructions:\n"
+                f"1. Keep your original answer but add more depth\n"
+                f"2. Cite specific sources when adding new information\n"
+                f"3. Maintain conversational flow\n"
+                f"4. Add examples from the knowledge base\n"
+                f"Student Question: {query}"
+            )
+            
+            print(f"[LLM] Enhancing with RAG context...")
+            response = llm_provider.generate_response(
+                prompt=query,
+                system_instruction=enhanced_system
+            )
+            
+            enhance_latency = (time.perf_counter() - enhance_start) * 1000
+            total_llm_latency = base_latency + enhance_latency
+            
+            print(f"[LLM] Enhanced response ready in {enhance_latency:.1f}ms")
+        else:
+            # No RAG available - use base response
+            response = base_response
+            total_llm_latency = base_latency
+            print(f"[LLM] Using base response (no RAG)")
+        
         total_latency = (time.perf_counter() - start_time) * 1000
         
-        # Step 4: Add source citations if RAG was used
-        if rag_response.sources and rag_response.strategy != RAGStrategy.NO_RAG:
+        # Step 5: Add source citations if RAG was used
+        if len(retrieved_chunks) > 0 and strategy != "no_rag":
+            sources = list(set([chunk.topic.title if chunk.topic else "General" for chunk in retrieved_chunks]))
             sources_text = "\n\n📚 **Sources:**\n" + "\n".join(
-                [f"- {source}" for source in rag_response.sources[:5]]
+                [f"- {source}" for source in sources[:5]]
             )
             response += sources_text
         
-        # Step 5: Log performance metrics
-        print(f"\n[Teacher Agent Performance]")
-        print(f"  RAG Latency:   {rag_latency:.1f}ms")
-        print(f"  LLM Latency:   {llm_latency:.1f}ms")
-        print(f"  Total Latency: {total_latency:.1f}ms")
-        print(f"  Response Length: {len(response)} chars")
+        # Step 6: Generate visual explanation if appropriate
+        canvas_commands = []
+        visual_generation_time = 0
+        
+        if should_generate_visual(query, response):
+            visual_start = time.perf_counter()
+            generator = VisualExplanationGenerator()
+            
+            # Detect concept from query/response
+            concept = query  # Could be enhanced with NLP extraction
+            canvas_commands_raw = generator.generate_for_concept(concept, query, context="")
+            
+            # Convert to dict format for JSON serialization
+            canvas_commands = [
+                {
+                    'action': cmd.action,
+                    'content': cmd.content,
+                    'position': cmd.position,
+                    'style': cmd.style,
+                    'animate': cmd.animate,
+                    'duration': cmd.duration,
+                    'font': cmd.font,
+                    'color': cmd.color,
+                    'size': cmd.size,
+                    'pause_after': cmd.pause_after
+                }
+                for cmd in canvas_commands_raw
+            ]
+            
+            visual_generation_time = (time.perf_counter() - visual_start) * 1000
+            print(f"[Visual Generator] Created {len(canvas_commands)} canvas commands in {visual_generation_time:.1f}ms")
+        
+        # Step 7: Log performance metrics
+        print(f"\n[Teacher Agent Performance - PARALLEL MODE]")
+        print(f"  Base Response:  {base_latency:.1f}ms (immediate)")
+        print(f"  RAG Latency:    {rag_latency:.1f}ms (background)")
+        print(f"  Total LLM:      {total_llm_latency:.1f}ms")
+        print(f"  Visual Gen:     {visual_generation_time:.1f}ms")
+        print(f"  Total Latency:  {total_latency:.1f}ms")
+        print(f"  ⚡ Speedup:     {((rag_latency + total_llm_latency) / total_latency):.2f}x faster")
+        print(f"  Response:       {len(response)} chars")
+        print(f"  Canvas Cmds:    {len(canvas_commands)} commands")
         print(f"{'='*80}\n")
         
         # Update state
         state["response"] = response
         state["next_agent"] = None
-        state["rag_strategy"] = rag_response.strategy.value
-        state["rag_confidence"] = rag_response.confidence
-        state["sources"] = rag_response.sources
+        state["rag_strategy"] = strategy
+        state["rag_confidence"] = 1.0 if len(retrieved_chunks) > 0 else 0.0
+        state["sources"] = [chunk.topic.title if chunk.topic else "General" for chunk in retrieved_chunks]
         state["teacher_latency_ms"] = total_latency
+        state["canvas_commands"] = canvas_commands  # AI drawing commands
+        state["base_response_latency_ms"] = base_latency  # Immediate response time
         
     except Exception as e:
         print(f"\n[Teacher Agent ERROR] {e}")

@@ -20,7 +20,7 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=Indie+Flower&family=Permanent+Marker&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/shared-learning.css">
     <link rel="stylesheet" href="/static/css/canvas.css">
 </head>
@@ -52,10 +52,20 @@
                 <div class="waveform-container">
                     <canvas id="waveform-canvas"></canvas>
                 </div>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text-small">Connecting...</span>
+                </div>
                 <p class="status-text">Listening...</p>
                 <div class="voice-input-container">
-                    <input type="text" class="voice-input" placeholder="Type your message...">
-                    <button class="voice-btn">🎤</button>
+                    <input type="text" class="voice-input" id="canvasMessageInput" placeholder="Type your message...">
+                    <button class="send-btn" id="canvasSendBtn" title="Send message">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                    <button class="voice-btn" id="canvasVoiceBtn" title="Voice input">🎤</button>
                 </div>
             </div>
 
