@@ -1,0 +1,41 @@
+{
+  "description": "Turn-type training data for SetFit classifier. 4 classes x 8 examples = 32 total.",
+  "classes": ["small_talk", "academic_hint", "help_seeking", "emotional"],
+  "examples": [
+    {"query": "hey buddy, how is your day?",             "turn_type": "small_talk"},
+    {"query": "what's up?",                              "turn_type": "small_talk"},
+    {"query": "good morning!",                           "turn_type": "small_talk"},
+    {"query": "hi there",                                "turn_type": "small_talk"},
+    {"query": "how are you doing today?",                "turn_type": "small_talk"},
+    {"query": "yo, anything interesting happening?",     "turn_type": "small_talk"},
+    {"query": "hey, just checking in",                   "turn_type": "small_talk"},
+    {"query": "nice to finally talk to you",             "turn_type": "small_talk"},
+
+    {"query": "can you explain what recursion is?",      "turn_type": "academic_hint"},
+    {"query": "what is a binary search tree?",           "turn_type": "academic_hint"},
+    {"query": "how does dynamic programming work?",      "turn_type": "academic_hint"},
+    {"query": "difference between stack and queue",      "turn_type": "academic_hint"},
+    {"query": "teach me about linked lists",             "turn_type": "academic_hint"},
+    {"query": "what's big O notation?",                  "turn_type": "academic_hint"},
+    {"query": "explain the concept of inheritance in OOP", "turn_type": "academic_hint"},
+    {"query": "how does a hash table work?",             "turn_type": "academic_hint"},
+
+    {"query": "I'm stuck on this problem",               "turn_type": "help_seeking"},
+    {"query": "I don't understand pointers at all",      "turn_type": "help_seeking"},
+    {"query": "can you help me figure this out?",        "turn_type": "help_seeking"},
+    {"query": "I'm confused about merge sort",           "turn_type": "help_seeking"},
+    {"query": "I can't wrap my head around recursion",   "turn_type": "help_seeking"},
+    {"query": "having trouble with my for loop",         "turn_type": "help_seeking"},
+    {"query": "please explain this again, I'm lost",     "turn_type": "help_seeking"},
+    {"query": "not sure where I'm going wrong here",     "turn_type": "help_seeking"},
+
+    {"query": "I'm really tired today",                  "turn_type": "emotional"},
+    {"query": "this is so hard, I want to give up",     "turn_type": "emotional"},
+    {"query": "I'm so frustrated with this code",        "turn_type": "emotional"},
+    {"query": "I feel overwhelmed by everything",        "turn_type": "emotional"},
+    {"query": "I'm exhausted and can't focus",           "turn_type": "emotional"},
+    {"query": "honestly I'm just bored",                 "turn_type": "emotional"},
+    {"query": "so stressed about this assignment",       "turn_type": "emotional"},
+    {"query": "I hate algorithms, this is too hard",     "turn_type": "emotional"}
+  ]
+}

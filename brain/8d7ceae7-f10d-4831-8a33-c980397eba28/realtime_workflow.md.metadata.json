@@ -1,5 +1,0 @@
-{
-  "artifactType":  "ARTIFACT_TYPE_OTHER",
-  "summary":  "Technical workflow describing the realtime event loop between Voice (STT/TTS) and the Canvas, ensuring sub-second latency and visual synchronization.",
-  "updatedAt":  "2026-01-04T03:48:30.516196600Z"
-}

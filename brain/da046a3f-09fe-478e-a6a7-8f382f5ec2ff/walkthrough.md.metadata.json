@@ -1,6 +1,0 @@
-{
-  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
-  "summary": "Added \"Dashboard Modernization\" to walkthrough.\n- Modern Bento Grid layout (dark mode, glassmorphism).\n- Dynamic stats via specialized API endpoint.\n- Context-aware recommendations (promoting the newly ingested content).",
-  "updatedAt": "2025-12-22T15:50:03.840316500Z",
-  "version": "6"
-}

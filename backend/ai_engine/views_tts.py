@@ -12,52 +12,41 @@ from ai_engine.tts import get_tts_engine
 @require_http_methods(["POST"])
 def generate_speech(request):
     """
-    Generate speech audio from text
-    
+    Generate speech audio from text using ElevenLabs TTS.
+
     POST /api/tts/generate/
     Body: {
-        "text": "I am waiting for you",
-        "language": "en"  // optional, defaults to "en"
+        "text":     "Hello from Vaathiyar",
+        "language": "en",          // optional (ignored, ElevenLabs auto-detects)
+        "agent":    "teacher"      // optional: teacher|coder|examiner|supervisor|default
     }
-    
-    Returns: Audio file (WAV format) with Content-Type: audio/wav
+
+    Returns: MP3 audio with Content-Type: audio/mpeg
     """
     try:
-        # Parse request body
         if not request.body:
-            return JsonResponse(
-                {'error': 'Empty request body'},
-                status=400
-            )
-        
+            return JsonResponse({'error': 'Empty request body'}, status=400)
+
         try:
             data = json.loads(request.body.decode('utf-8'))
         except json.JSONDecodeError as e:
-            return JsonResponse(
-                {'error': f'Invalid JSON: {str(e)}'},
-                status=400
-            )
-        
-        text = data.get('text', '').strip()
-        language = data.get('language', 'en')
-        
+            return JsonResponse({'error': f'Invalid JSON: {str(e)}'}, status=400)
+
+        text   = data.get('text', '').strip()
+        agent  = data.get('agent', 'default')
+        language = data.get('language', 'en')   # kept for backward compat
+
         if not text:
-            return JsonResponse(
-                {'error': 'Text parameter is required'},
-                status=400
-            )
-        
-        # Get TTS engine
+            return JsonResponse({'error': 'Text parameter is required'}, status=400)
+
         tts_engine = get_tts_engine()
-        
-        # Generate speech
-        audio_data = tts_engine.generate_speech(text, language)
-        
-        # Return audio as WAV
-        response = HttpResponse(audio_data, content_type='audio/wav')
-        response['Content-Disposition'] = 'inline; filename="speech.wav"'
-        response['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
-        
+        audio_data = tts_engine.generate_speech(text, language=language, agent=agent)
+
+        # ElevenLabs returns MP3 — update Content-Type accordingly
+        response = HttpResponse(audio_data, content_type='audio/mpeg')
+        response['Content-Disposition'] = 'inline; filename="speech.mp3"'
+        response['Cache-Control'] = 'public, max-age=3600'
+
         return response
         
     except ValueError as e:

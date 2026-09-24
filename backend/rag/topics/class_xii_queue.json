@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Queue",
+    "subtopics": [
+      "Introduction to Queue",
+      "Operations on Queue",
+      "Implementation of Queue using Python",
+      "Introduction to Deque",
+      "Implementation of Deque"
+    ]
+  }
+]

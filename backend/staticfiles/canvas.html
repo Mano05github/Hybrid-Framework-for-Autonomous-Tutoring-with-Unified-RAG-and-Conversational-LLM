@@ -6,7 +6,8 @@
     <title>Canvas - Vaathiyar</title>
     <link rel="stylesheet" href="/static/css/shared-learning.css">
     <link rel="stylesheet" href="/static/css/canvas.css">
-    
+    <link rel="stylesheet" href="/static/css/tree-visualizer.css">
+
     <!-- Auth Guard (must load first) -->
     <script src="/static/js/auth-guard.js"></script>
     <script src="/static/js/api-client.js"></script>
@@ -20,11 +21,13 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/shared-learning.css">
-    <link rel="stylesheet" href="/static/css/canvas.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=Indie+Flower&family=Permanent+Marker&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Cinematic Effects -->
+    <div class="noise-overlay"></div>
+    <div class="vignette"></div>
+    
     <!-- Floating Particles Background -->
     <canvas id="particles-bg"></canvas>
     
@@ -38,6 +41,7 @@
     <nav class="top-nav">
         <span class="brand">Vaathiyar</span>
         <div class="nav-actions">
+            <button class="end-session-btn" id="endSessionBtn" type="button">End Session</button>
             <a href="dashboard.html">Dashboard</a>
         </div>
     </nav>
@@ -52,10 +56,20 @@
                 <div class="waveform-container">
                     <canvas id="waveform-canvas"></canvas>
                 </div>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text-small">Connecting...</span>
+                </div>
                 <p class="status-text">Listening...</p>
                 <div class="voice-input-container">
-                    <input type="text" class="voice-input" placeholder="Type your message...">
-                    <button class="voice-btn">🎤</button>
+                    <input type="text" class="voice-input" id="canvasMessageInput" placeholder="Type your message...">
+                    <button class="send-btn" id="canvasSendBtn" title="Send message">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                    <button class="voice-btn" id="canvasVoiceBtn" title="Voice input">🎤</button>
                 </div>
             </div>
 
@@ -65,8 +79,15 @@
                 <!-- Canvas Header -->
                 <div class="canvas-header">
                     <h1 class="canvas-title">Whiteboard</h1>
-                    <div class="canvas-actions">
-                        <button class="action-btn" id="exportBtn">
+                    <div class="canvas-header-right">
+                        <div class="teaching-controls" aria-label="Teaching controls">
+                            <button class="teach-btn" id="teachPlayBtn" type="button" title="Play teaching sequence">Play</button>
+                            <button class="teach-btn" id="teachPauseBtn" type="button" title="Pause teaching sequence">Pause</button>
+                            <button class="teach-btn" id="teachSkipBtn" type="button" title="Skip current phase">Skip</button>
+                            <span class="teach-status" id="teachStatus">Teaching: Idle</span>
+                        </div>
+                        <div class="canvas-actions">
+                            <button class="action-btn" id="exportBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -74,13 +95,14 @@
                             </svg>
                             Export PNG
                         </button>
-                        <button class="action-btn" id="clearBtn">
+                            <button class="action-btn" id="clearBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
                             Clear Canvas
                         </button>
+                        </div>
                     </div>
                 </div>
 
@@ -150,7 +172,16 @@
 
                 <!-- Canvas Area -->
                 <div class="canvas-wrapper">
+                    <div class="phase-badge" id="phaseBadge">Phase: Idle</div>
                     <canvas id="drawingCanvas"></canvas>
+
+                    <!-- Tree Visualization Overlay -->
+                    <div id="tree-overlay">
+                        <svg id="tree-svg" width="100%" height="100%"></svg>
+                    </div>
+
+                    <!-- Mode Badge -->
+                    <div id="mode-badge" class="mode-badge">Canvas</div>
                 </div>
 
             </div>
@@ -161,6 +192,18 @@
     <script src="/static/js/api-client.js"></script>
     <script src="/static/js/websocket-client.js"></script>
     <script src="/static/js/shared-utils.js"></script>
+    <script src="/static/js/tree-visualizer.js"></script>
+    <script src="/static/js/mode-manager.js"></script>
     <script src="/static/js/canvas.js"></script>
+    <script src="/static/js/custom-cursor.js"></script>
+    <script>
+        // Initialise ModeManager once canvas.js has set up CanvasWhiteboard
+        document.addEventListener('DOMContentLoaded', () => {
+            // canvas.js exposes the instance via window.canvasWhiteboard
+            const treeViz   = new TreeVisualizer(document.getElementById('tree-svg'));
+            const mgr       = new ModeManager(window.canvasWhiteboard, treeViz);
+            window.modeManager = mgr;
+        });
+    </script>
 </body>
 </html>

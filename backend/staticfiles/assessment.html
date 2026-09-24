@@ -12,6 +12,10 @@
     <link rel="stylesheet" href="/static/css/assessment.css">
 </head>
 <body>
+    <!-- Cinematic Effects -->
+    <div class="noise-overlay"></div>
+    <div class="vignette"></div>
+    
     <!-- Floating Particles Background -->
     <canvas id="particles-bg"></canvas>
     
@@ -25,6 +29,7 @@
     <nav class="top-nav">
         <span class="brand">Vaathiyar</span>
         <div class="nav-actions">
+            <button class="end-session-btn" id="endSessionBtn" type="button">End Session</button>
             <a href="dashboard.html">Dashboard</a>
         </div>
     </nav>
@@ -172,5 +177,6 @@ def insert(root, val):
     <script src="/static/js/api-client.js"></script>
     <script src="/static/js/shared-utils.js"></script>
     <script src="/static/js/assessment.js"></script>
+    <script src="/static/js/custom-cursor.js"></script>
 </body>
 </html>

@@ -23,6 +23,7 @@ class AssessmentController {
         this.nextBtn = document.getElementById('nextBtn');
         this.submitBtn = document.getElementById('submitBtn');
         this.reasoningTextarea = document.getElementById('reasoning');
+        this.endSessionBtn = document.getElementById('endSessionBtn');
         
         // Progress elements
         this.currentQuestionSpan = document.getElementById('currentQuestion');
@@ -54,6 +55,10 @@ class AssessmentController {
         this.prevBtn.addEventListener('click', () => this.previousQuestion());
         this.nextBtn.addEventListener('click', () => this.nextQuestion());
         this.submitBtn.addEventListener('click', () => this.submitAssessment());
+
+        if (this.endSessionBtn) {
+            this.endSessionBtn.addEventListener('click', () => this.endSessionAndReturn());
+        }
         
         // Reasoning textarea
         this.reasoningTextarea.addEventListener('input', (e) => {
@@ -64,6 +69,32 @@ class AssessmentController {
         this.startTime = Date.now();
         this.questionStartTimes[this.currentQuestionIndex] = Date.now();
         this.updateDisplay();
+    }
+
+    async endSessionAndReturn() {
+        if (this.endSessionInProgress) return;
+
+        const confirmed = confirm('End this session and return to the Supervisor?');
+        if (!confirmed) return;
+
+        this.endSessionInProgress = true;
+        this.endSessionBtn.disabled = true;
+        this.endSessionBtn.textContent = 'Ending...';
+
+        try {
+            if (!this.sessionId) {
+                const activeSession = await window.apiClient.getActiveSession();
+                this.sessionId = activeSession.id || activeSession.session_id || null;
+            }
+
+            if (this.sessionId) {
+                await window.apiClient.endSession(this.sessionId);
+            }
+        } catch (error) {
+            console.error('Failed to end session:', error);
+        }
+
+        window.location.href = 'voice-supervisor.html';
     }
     
     async initSession() {
@@ -300,7 +331,7 @@ class AssessmentController {
         }
         
         // Show results
-        alert(`Assessment submitted!\n\nScore: ${score}/${this.totalQuestions} (${percentage}%)\nTime: ${Math.floor(totalTime / 60)}m ${totalTime % 60}s\n\nYou will be redirected to the dashboard.`);
+        alert(`Assessment submitted!\n\nScore: ${score}/${this.totalQuestions} (${percentage}%)\nTime: ${Math.floor(totalTime / 60)}m ${totalTime % 60}s\n\nYou will be redirected to the supervisor.`);
         
         console.log('Quiz Results:', {
             score,
@@ -310,9 +341,17 @@ class AssessmentController {
             results
         });
         
-        // Redirect to dashboard
+        try {
+            if (this.sessionId) {
+                await window.apiClient.endSession(this.sessionId);
+            }
+        } catch (error) {
+            console.error('Failed to end session:', error);
+        }
+
+        // Redirect to supervisor
         setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'voice-supervisor.html';
         }, 2000);
     }
     

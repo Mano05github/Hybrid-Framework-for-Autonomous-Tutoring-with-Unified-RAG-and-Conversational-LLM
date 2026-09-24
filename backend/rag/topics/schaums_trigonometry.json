@@ -1,0 +1,99 @@
+[
+  {
+    "name": "Trigonometric Functions",
+    "subtopics": [
+      "Angles",
+      "Degree and Radian Measure",
+      "Trigonometric Functions of an Acute Angle",
+      "Trigonometric Functions of Any Angle",
+      "Signs of the Trigonometric Functions",
+      "Circular Functions",
+      "Reference Angles",
+      "Graphs of the Trigonometric Functions",
+      "Amplitude, Period, and Phase Shift",
+      "Inverse Trigonometric Functions"
+    ]
+  },
+  {
+    "name": "Trigonometric Identities",
+    "subtopics": [
+      "Fundamental Identities",
+      "Reciprocal Identities",
+      "Quotient Identities",
+      "Pythagorean Identities",
+      "Even and Odd Identities",
+      "Cofunction Identities",
+      "Sum and Difference Formulas",
+      "Double-Angle Formulas",
+      "Half-Angle Formulas",
+      "Product-to-Sum Formulas",
+      "Sum-to-Product Formulas"
+    ]
+  },
+  {
+    "name": "Trigonometric Equations",
+    "subtopics": [
+      "Basic Trigonometric Equations",
+      "General Solutions of Trigonometric Equations",
+      "Equations Involving Multiple Angles",
+      "Equations Involving Inverse Functions"
+    ]
+  },
+  {
+    "name": "Right Triangle Trigonometry",
+    "subtopics": [
+      "Solving Right Triangles",
+      "Applications of Right Triangles",
+      "Angle of Elevation and Depression"
+    ]
+  },
+  {
+    "name": "Oblique Triangles",
+    "subtopics": [
+      "Law of Sines",
+      "Law of Cosines",
+      "Area of a Triangle",
+      "Ambiguous Case"
+    ]
+  },
+  {
+    "name": "Complex Numbers and De Moivres Theorem",
+    "subtopics": [
+      "Complex Numbers in Trigonometric Form",
+      "Eulers Formula",
+      "De Moivres Theorem",
+      "Roots of Complex Numbers"
+    ]
+  },
+  {
+    "name": "Polar Coordinates",
+    "subtopics": [
+      "Polar Coordinate System",
+      "Conversion Between Polar and Rectangular Coordinates",
+      "Graphs in Polar Coordinates"
+    ]
+  },
+  {
+    "name": "Vectors",
+    "subtopics": [
+      "Vectors in the Plane",
+      "Vector Addition and Subtraction",
+      "Dot Product",
+      "Applications of Vectors"
+    ]
+  },
+  {
+    "name": "Trigonometric Form of Complex Numbers",
+    "subtopics": [
+      "Exponential Form",
+      "Powers and Roots"
+    ]
+  },
+  {
+    "name": "Additional Topics",
+    "subtopics": [
+      "Hyperbolic Functions",
+      "Inverse Hyperbolic Functions"
+    ]
+  }
+]

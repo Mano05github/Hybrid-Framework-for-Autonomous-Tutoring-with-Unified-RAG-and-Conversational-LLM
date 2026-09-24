@@ -67,9 +67,16 @@ class SemanticCache:
         self.ttl = timedelta(hours=ttl_hours)
         self.max_size = max_size
         
-        # Load embedding model (lightweight, ~80MB)
-        print(f"Loading embedding model: {embedding_model}")
-        self.encoder = SentenceTransformer(embedding_model)
+        # Load embedding model from local cache if available
+        from pathlib import Path
+        local_model_path = Path(__file__).parent.parent / "models" / "embeddings" / embedding_model
+        
+        if local_model_path.exists():
+            print(f"Loading embedding model from cache: {embedding_model} (<1s)")
+            self.encoder = SentenceTransformer(str(local_model_path))
+        else:
+            print(f"Loading embedding model from HuggingFace: {embedding_model} (~2s)")
+            self.encoder = SentenceTransformer(embedding_model)
         
         # Cache storage
         self.cache: Dict[str, CacheEntry] = {}  # key = query_hash

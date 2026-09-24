@@ -1,0 +1,149 @@
+[
+  {
+    "name": "Arrays",
+    "subtopics": [
+      "Introduction"
+    ]
+  },
+  {
+    "name": "Hash maps, tables",
+    "subtopics": [
+      "Problem 1: Remove duplicates",
+      "Problem 2: Two Sum + Sorted"
+    ]
+  },
+  {
+    "name": "Linked List",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Linked list methods",
+      "Problem 2: Linked List cycle",
+      "Problem 3: Deleting a node",
+      "Problem 4: Merge sorted lists",
+      "Problem 5: Merge K Sorted lists:"
+    ]
+  },
+  {
+    "name": "Sliding Window",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Max sum for consecutive k",
+      "Problem 2: Fruits into basket"
+    ]
+  },
+  {
+    "name": "Binary Search",
+    "subtopics": [
+      "Introduction",
+      "Algorithm",
+      "Intro Problems",
+      "Problem 1: Max font size",
+      "Problem 2: Search in rotated sorted array"
+    ]
+  },
+  {
+    "name": "Recursion",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Generate parentheses",
+      "Problem 2: Reverse linked list",
+      "Pattern: Breaking down",
+      "Problem 3: Letter combination of phone numbers"
+    ]
+  },
+  {
+    "name": "Backtracking",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Permutations",
+      "Problem 2: Subsets",
+      "Problem 3: Combination Sum",
+      "Problem 4: N-queens",
+      "Memoization"
+    ]
+  },
+  {
+    "name": "BFS, DFS",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Number of Islands",
+      "Pattern: 2D Matrix",
+      "Problem 2: Level order traversal",
+      "Problem 3: Rotten oranges"
+    ]
+  },
+  {
+    "name": "Dynamic Programming",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: 01 Knapsack",
+      "Problem 2: Min path sum",
+      "Problem 3: Minimum cost of tickets",
+      "Problem 4: Buy and sell stocks 3",
+      "Problem 5: Paint house",
+      "Problem 6: Edit Distance"
+    ]
+  },
+  {
+    "name": "Trees",
+    "subtopics": [
+      "Introduction",
+      "Pattern: Traversals",
+      "Problem 1: Min depth of a tree",
+      "Problem 2: LCA of binary tree",
+      "Problem 3: Binary tree to BST"
+    ]
+  },
+  {
+    "name": "Graphs",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Finding the root vertex",
+      "Problem 2: Graph coloring",
+      "Problem 3: Detect cycle in graph",
+      "Problem 4: Friend Circles",
+      "Problem 5: Connected components"
+    ]
+  },
+  {
+    "name": "Topological Sorting",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Course Schedule"
+    ]
+  },
+  {
+    "name": "Greedy Algorithms",
+    "subtopics": [
+      "Problem 1: Merge intervals",
+      "Problem 2: Meeting rooms",
+      "Problem 3: Largest number"
+    ]
+  },
+  {
+    "name": "Priority Queue",
+    "subtopics": [
+      "Problem 4: Top k elements",
+      "Problem 5: Coin calculator"
+    ]
+  },
+  {
+    "name": "Tries",
+    "subtopics": [
+      "Introduction",
+      "Problem 1: Implement Trie",
+      "Insert",
+      "Searching",
+      "Starts With"
+    ]
+  },
+  {
+    "name": "Additional Topics",
+    "subtopics": [
+      "Kadane’s algorithm",
+      "Djikstra’s algorithm",
+      "AVL Trees",
+      "Sorting"
+    ]
+  }
+]

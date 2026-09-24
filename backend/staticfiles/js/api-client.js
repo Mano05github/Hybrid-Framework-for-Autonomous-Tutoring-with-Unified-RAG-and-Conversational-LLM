@@ -161,6 +161,15 @@ class APIClient {
     }
 
     /**
+     * Get active session
+     */
+    async getActiveSession() {
+        return await this.request('/api/sessions/active/', {
+            method: 'GET'
+        });
+    }
+
+    /**
      * Get today's session statistics
      */
     async getTodayStats() {
@@ -225,6 +234,13 @@ class APIClient {
                 session_id: sessionId 
             })
         });
+    }
+
+    /**
+     * Submit code for Gap 3 Socratic review
+     */
+    async submitCodeForReview(code, sessionId = null, problemId = 'general_practice') {
+        return await this.submitCode(problemId, code, sessionId);
     }
 
     // ==================== Learning Methods ====================

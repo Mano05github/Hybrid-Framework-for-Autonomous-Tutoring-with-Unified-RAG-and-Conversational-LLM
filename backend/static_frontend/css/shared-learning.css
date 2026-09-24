@@ -58,6 +58,62 @@ body {
     color: var(--color-soft-white);
     line-height: 1.6;
     overflow-x: hidden;
+    cursor: none; /* Custom cursor */
+}
+
+/* ===================================
+   CINEMATIC EFFECTS (Dashboard Alignment)
+   =================================== */
+
+/* Custom Cursor */
+.cursor-dot,
+.cursor-outline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.cursor-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-neon-blue);
+    box-shadow: 0 0 10px var(--color-neon-blue);
+}
+
+.cursor-outline {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    transition: width 0.2s, height 0.2s;
+}
+
+/* Cinematic Grain Overlay */
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* Vignette */
+.vignette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.6) 120%);
+    z-index: 9997;
+    pointer-events: none;
 }
 
 /* ===================================
@@ -173,6 +229,31 @@ body {
 .nav-actions a:hover {
     color: var(--color-soft-white);
     background: rgba(0, 212, 255, 0.1);
+}
+
+.nav-actions button {
+    color: var(--color-muted-gray);
+    background: transparent;
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.375rem 0.875rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.nav-actions button:hover {
+    color: var(--color-soft-white);
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.nav-actions .end-session-btn {
+    border-color: rgba(239, 68, 68, 0.6);
+}
+
+.nav-actions .end-session-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
 }
 
 /* ===================================

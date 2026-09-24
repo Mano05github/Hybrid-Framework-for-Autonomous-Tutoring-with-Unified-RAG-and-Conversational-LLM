@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Stack",
+    "subtopics": [
+      "Introduction",
+      "Operations on Stack",
+      "Implementation of Stack in Python",
+      "Notations for Arithmetic Expressions",
+      "Conversion From Infix To Postfix"
+    ]
+  }
+]

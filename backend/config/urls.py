@@ -1,54 +1,48 @@
 """
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+URL configuration for Vaathiyar project.
 """
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
 from django.views.generic import TemplateView
-from learning_session.views_analytics import get_available_topics
+
 
 def home(request):
     return JsonResponse({
-        "message": "Welcome to the Personal Tutoring API",
+        "message": "Welcome to the Vaathiyar Tutoring API",
         "endpoints": {
-            "admin": "/admin/",
-            "users": "/api/users/",
-            "core": "/api/core/"
+            "admin":    "/admin/",
+            "users":    "/api/users/",
+            "core":     "/api/core/",
+            "ai":       "/api/ai/",
+            "sessions": "/api/sessions/",
         }
     })
+
 
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
-    
+
     # API endpoints
-    path('api/users/', include('users.urls')),
-    path('api/core/', include('core.urls')),
-    path('api/ai/', include('ai_engine.urls')),
-    path('api/gaps/', include('learning_session.urls')),  # Gap implementations
-    path('api/sessions/', include('learning_session.urls')),  # Analytics endpoints
-    path('api/topics/available/', get_available_topics, name='topics_available'),
-    
-    # Frontend HTML pages
-    path('', TemplateView.as_view(template_name='index.html'), name='index'),
-    path('login.html', TemplateView.as_view(template_name='login.html'), name='login'),
-    path('register.html', TemplateView.as_view(template_name='register.html'), name='register'),
-    path('dashboard.html', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
-    path('voice.html', TemplateView.as_view(template_name='voice.html'), name='voice'),
-    path('editor.html', TemplateView.as_view(template_name='editor.html'), name='editor'),
-    path('canvas.html', TemplateView.as_view(template_name='canvas.html'), name='canvas'),
-    path('assessment.html', TemplateView.as_view(template_name='assessment.html'), name='assessment'),
+    path('api/users/',    include('users.urls')),
+    path('api/core/',     include('core.urls')),
+    path('api/ai/',       include('ai_engine.urls')),
+    path('api/sessions/', include('learning_session.urls')),
+    path('api/pbl/',      include('ai_engine.pbl.urls')),
+
+    # Root API info
+    path('api/', home, name='api_root'),
+
+    # Frontend HTML pages (only files that actually exist in static_frontend/)
+    path('', TemplateView.as_view(template_name='landing.html'), name='index'),
+    path('login.html',            TemplateView.as_view(template_name='login.html'),            name='login'),
+    path('register.html',         TemplateView.as_view(template_name='register.html'),         name='register'),
+    path('dashboard.html',        TemplateView.as_view(template_name='dashboard.html'),        name='dashboard'),
+    path('canvas.html',            TemplateView.as_view(template_name='canvas.html'),            name='canvas'),
+    path('learn.html',            TemplateView.as_view(template_name='learn.html'),            name='learn'),
+    path('subject-hub.html',      TemplateView.as_view(template_name='subject-hub.html'),      name='subject_hub'),
+    path('landing.html',          TemplateView.as_view(template_name='landing.html'),          name='landing'),
+    path('canvas.html',            TemplateView.as_view(template_name='canvas.html'),            name='canvas'),
+    path('pbl.html',              TemplateView.as_view(template_name='pbl.html'),              name='pbl'),
 ]

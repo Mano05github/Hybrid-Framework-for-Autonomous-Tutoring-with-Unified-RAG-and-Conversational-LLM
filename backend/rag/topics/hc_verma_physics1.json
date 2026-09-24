@@ -1,0 +1,145 @@
+[
+  {
+    "name": "Introduction to Physics",
+    "subtopics": [
+      "What is Physics",
+      "Scope and Excitement of Physics",
+      "Physics Technology and Society",
+      "Fundamental Forces in Nature",
+      "Nature of Physical Laws"
+    ]
+  },
+  {
+    "name": "Physics and Mathematics",
+    "subtopics": [
+      "Significant Figures",
+      "Dimensions",
+      "Dimensional Analysis",
+      "Errors in Measurement"
+    ]
+  },
+  {
+    "name": "Rest and Motion Kinematics",
+    "subtopics": [
+      "Description of Motion",
+      "Distance and Displacement",
+      "Speed and Velocity",
+      "Acceleration",
+      "Equations of Motion",
+      "Motion under Gravity",
+      "Graphical Representation of Motion"
+    ]
+  },
+  {
+    "name": "The Forces",
+    "subtopics": [
+      "Types of Forces",
+      "Contact and Non-contact Forces",
+      "Gravitational Force",
+      "Electric and Magnetic Forces"
+    ]
+  },
+  {
+    "name": "Newtons Laws of Motion",
+    "subtopics": [
+      "Newtons First Law",
+      "Newtons Second Law",
+      "Newtons Third Law",
+      "Applications of Newtons Laws",
+      "Free Body Diagrams",
+      "Tension and Normal Reaction"
+    ]
+  },
+  {
+    "name": "Friction",
+    "subtopics": [
+      "Static Friction",
+      "Kinetic Friction",
+      "Laws of Friction",
+      "Rolling Friction"
+    ]
+  },
+  {
+    "name": "Circular Motion",
+    "subtopics": [
+      "Uniform Circular Motion",
+      "Centripetal Force",
+      "Banking of Roads",
+      "Motion in a Vertical Circle"
+    ]
+  },
+  {
+    "name": "Work and Energy",
+    "subtopics": [
+      "Work Done by a Force",
+      "Kinetic Energy",
+      "Work-Energy Theorem",
+      "Potential Energy",
+      "Conservative and Non-Conservative Forces",
+      "Power"
+    ]
+  },
+  {
+    "name": "Centre of Mass Linear Momentum and Collision",
+    "subtopics": [
+      "Centre of Mass",
+      "Motion of Centre of Mass",
+      "Linear Momentum",
+      "Conservation of Momentum",
+      "Elastic and Inelastic Collisions"
+    ]
+  },
+  {
+    "name": "Rotational Mechanics",
+    "subtopics": [
+      "Rigid Body Rotation",
+      "Angular Displacement and Velocity",
+      "Torque",
+      "Moment of Inertia",
+      "Angular Momentum",
+      "Conservation of Angular Momentum",
+      "Rolling Motion"
+    ]
+  },
+  {
+    "name": "Gravitation",
+    "subtopics": [
+      "Universal Law of Gravitation",
+      "Acceleration Due to Gravity",
+      "Gravitational Potential Energy",
+      "Escape Velocity",
+      "Satellites"
+    ]
+  },
+  {
+    "name": "Simple Harmonic Motion",
+    "subtopics": [
+      "Periodic Motion",
+      "Simple Harmonic Motion",
+      "Equations of SHM",
+      "Energy in SHM",
+      "Applications of SHM"
+    ]
+  },
+  {
+    "name": "Fluid Mechanics",
+    "subtopics": [
+      "Pressure",
+      "Pascals Law",
+      "Archimedes Principle",
+      "Surface Tension",
+      "Viscosity",
+      "Bernoullis Theorem"
+    ]
+  },
+  {
+    "name": "Mechanical Properties of Matter",
+    "subtopics": [
+      "Elasticity",
+      "Stress and Strain",
+      "Youngs Modulus",
+      "Bulk Modulus",
+      "Shear Modulus"
+    ]
+  }
+]

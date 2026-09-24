@@ -56,6 +56,7 @@ class CanvasWhiteboard {
         this.exportBtn = document.getElementById('exportBtn');
         this.clearBtn = document.getElementById('clearBtn');
         this.floatingToolbar = document.getElementById('floatingToolbar');
+        this.endSessionBtn = document.getElementById('endSessionBtn');
         
         // Chat elements
         this.messageInput = document.getElementById('canvasMessageInput');
@@ -69,6 +70,25 @@ class CanvasWhiteboard {
         this.currentAICommand = null;
         this.penCursor = null;  // Pen trail cursor element
         this.aiLayer = null;    // Separate layer for AI drawings
+
+        // Teaching script playback
+        this.lastTeachingScript = [];
+        this.pendingTeachingScript = [];
+        this.pendingTeachingCommands = [];
+        this.teachingState = {
+            status: 'idle',
+            phaseIndex: 0,
+            paused: false,
+            stop: false,
+            skip: false,
+            drawnAllCommands: false,
+            token: 0
+        };
+        this.teachPlayBtn = document.getElementById('teachPlayBtn');
+        this.teachPauseBtn = document.getElementById('teachPauseBtn');
+        this.teachSkipBtn = document.getElementById('teachSkipBtn');
+        this.teachStatus = document.getElementById('teachStatus');
+        this.phaseBadge = document.getElementById('phaseBadge');
         
         this.init();
     }
@@ -127,6 +147,10 @@ class CanvasWhiteboard {
         // Export and clear
         this.exportBtn.addEventListener('click', () => this.exportCanvas());
         this.clearBtn.addEventListener('click', () => this.clearCanvas());
+
+        if (this.endSessionBtn) {
+            this.endSessionBtn.addEventListener('click', () => this.endSessionAndReturn());
+        }
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -149,11 +173,40 @@ class CanvasWhiteboard {
         
         // Initialize AI drawing system
         this.initAIDrawingSystem();
+
+        // Initialize teaching controls
+        this.initTeachingControls();
         
         // Initial render
         this.render();
         
         console.log('✨ Canvas Whiteboard initialized (Infinite Canvas Mode + AI Drawing)');
+    }
+
+    async endSessionAndReturn() {
+        if (this.endSessionInProgress) return;
+
+        const confirmed = confirm('End this session and return to the Supervisor?');
+        if (!confirmed) return;
+
+        this.endSessionInProgress = true;
+        this.endSessionBtn.disabled = true;
+        this.endSessionBtn.textContent = 'Ending...';
+
+        try {
+            if (!this.sessionId) {
+                const activeSession = await window.apiClient.getActiveSession();
+                this.sessionId = activeSession.id || activeSession.session_id || null;
+            }
+
+            if (this.sessionId) {
+                await window.apiClient.endSession(this.sessionId);
+            }
+        } catch (error) {
+            console.error('Failed to end session:', error);
+        }
+
+        window.location.href = 'canvas.html';
     }
     
     resizeCanvas() {
@@ -628,19 +681,45 @@ class CanvasWhiteboard {
                 return;
             }
             
-            // Start or get active session
-            const session = await window.apiClient.startSession();
-            this.sessionId = session.id || session.session_id;
-            console.log('✅ Canvas session started:', this.sessionId);
+            const urlParams    = new URLSearchParams(window.location.search);
+            const urlSessionId = urlParams.get('session_id');
+            const urlTopicId   = urlParams.get('topic_id');
+            if (urlSessionId) {
+                this.sessionId = urlSessionId;
+                console.log('✅ Canvas session resumed:', this.sessionId);
+            } else {
+                const activeSession = await window.apiClient.getActiveSession();
+                if (activeSession && (activeSession.id || activeSession.session_id)) {
+                    this.sessionId = activeSession.id || activeSession.session_id;
+                    console.log('✅ Canvas session reused:', this.sessionId);
+                } else {
+                    const session = await window.apiClient.startSession(urlTopicId);
+                    this.sessionId = session.id || session.session_id;
+                    console.log('✅ Canvas session started (topic:', urlTopicId, '):', this.sessionId);
+                }
+            }
             
             // Set up WebSocket callbacks BEFORE connecting
             window.wsClient.onConnect(() => {
                 this.wsConnected = true;
                 this.updateConnectionStatus('connected');
                 console.log('✅ Canvas WebSocket connected');
+                window.wsClient.sendMessage({
+                    type: 'canvas_ready',
+                    event_type: 'canvas_ready',
+                    context: { canvas_mode: true }
+                });
             });
             
             window.wsClient.onMessage((data) => {
+                console.log('📨 Canvas received WebSocket message:', {
+                    type: data.type,
+                    hasMessage: !!data.message,
+                    hasCanvasCommands: !!data.canvas_commands,
+                    commandCount: data.canvas_commands ? data.canvas_commands.length : 0,
+                    fullData: data
+                });
+                
                 this.handleAIFeedback(data);
                 
                 // Listen for pause detection from Gap 5
@@ -724,6 +803,39 @@ class CanvasWhiteboard {
     }
     
     handleAIFeedback(data) {
+        console.log('🔍 handleAIFeedback called:', {
+            type: data.type,
+            hasMessage: !!data.message,
+            hasCanvasCommands: !!data.canvas_commands,
+            isArray: Array.isArray(data.canvas_commands),
+            commandCount: data.canvas_commands ? data.canvas_commands.length : 0
+        });
+
+        if (data.teaching_script && Array.isArray(data.teaching_script)) {
+            this.lastTeachingScript = data.teaching_script;
+            console.log('📘 Teaching script received:', data.teaching_script);
+            if (!data.canvas_commands || data.canvas_commands.length === 0) {
+                this.queueTeachingPlayback(data.teaching_script, []);
+            }
+        }
+        
+        // Mode switching — tree vs canvas
+        if (data.type === 'mode_transition') {
+            if (data.to === 'tree' && data.tree_data) {
+                window.modeManager?.switchToTree(data.tree_data);
+            } else {
+                window.modeManager?.switchToCanvas();
+            }
+        }
+
+        if (data.type === 'teacher_response') {
+            if (data.render_mode === 'tree' && data.tree_data) {
+                window.modeManager?.switchToTree(data.tree_data);
+            } else if (data.render_mode === 'canvas' || data.render_mode === 'default') {
+                window.modeManager?.switchToCanvas();
+            }
+        }
+
         if (data.type === 'ai_response' && data.message) {
             this.showValidationFeedback(data.message, 'success');
         }
@@ -731,13 +843,28 @@ class CanvasWhiteboard {
         // Handle AI drawing commands
         if (data.type === 'ai_drawing' && data.canvas_commands && data.canvas_commands.length > 0) {
             console.log('🎨 Received AI drawing commands:', data.canvas_commands.length);
-            this.startAIDrawing(data.canvas_commands);
+            console.log('  Commands:', data.canvas_commands);
+            if (data.teaching_script && Array.isArray(data.teaching_script)) {
+                this.queueTeachingPlayback(data.teaching_script, data.canvas_commands);
+            } else {
+                this.startAIDrawing(data.canvas_commands);
+            }
         }
         
         // Handle teacher response with canvas commands
         if (data.type === 'teacher_response' && data.canvas_commands && data.canvas_commands.length > 0) {
             console.log('🎨 Teacher response includes canvas commands:', data.canvas_commands.length);
-            this.startAIDrawing(data.canvas_commands);
+            console.log('  Commands:', data.canvas_commands);
+            if (data.teaching_script && Array.isArray(data.teaching_script)) {
+                this.queueTeachingPlayback(data.teaching_script, data.canvas_commands);
+            } else {
+                this.startAIDrawing(data.canvas_commands);
+            }
+        }
+        
+        // Debug: Log if expected but not found
+        if (data.type === 'teacher_response' && (!data.canvas_commands || data.canvas_commands.length === 0)) {
+            console.warn('⚠️ Teacher response received but NO canvas commands found');
         }
     }
     
@@ -836,8 +963,37 @@ class CanvasWhiteboard {
         this.penCursor.className = 'ai-pen-cursor';
         this.penCursor.style.display = 'none';
         this.canvas.parentElement.appendChild(this.penCursor);
+
+        // Create Khan Academy style narration subtitle bar
+        if (!document.getElementById('ka-narration-bar')) {
+            this.narrationBar = document.createElement('div');
+            this.narrationBar.id = 'ka-narration-bar';
+            this.narrationBar.style.cssText = [
+                'position:fixed', 'bottom:28px', 'left:50%',
+                'transform:translateX(-50%)',
+                'max-width:680px', 'width:90%',
+                'background:rgba(10,14,26,0.88)',
+                'backdrop-filter:blur(12px)',
+                'border:1px solid rgba(0,212,255,0.25)',
+                'border-radius:14px',
+                'padding:14px 22px',
+                'font-family:Inter,sans-serif',
+                'font-size:15px',
+                'line-height:1.55',
+                'color:#e8f4ff',
+                'letter-spacing:0.01em',
+                'z-index:9999',
+                'display:none',
+                'transition:opacity 0.35s',
+                'box-shadow:0 8px 32px rgba(0,0,0,0.55)'
+            ].join(';');
+            document.body.appendChild(this.narrationBar);
+        } else {
+            this.narrationBar = document.getElementById('ka-narration-bar');
+        }
+        this._narrationHideTimer = null;
         
-        // Add CSS for pen cursor
+        // Add CSS for pen cursor & narration
         if (!document.getElementById('ai-drawing-styles')) {
             const style = document.createElement('style');
             style.id = 'ai-drawing-styles';
@@ -854,23 +1010,401 @@ class CanvasWhiteboard {
                     box-shadow: 0 0 10px rgba(0,212,255,0.8);
                     transition: all 0.05s linear;
                 }
-                
-                .ai-handwriting {
-                    font-family: 'Caveat', cursive;
-                }
-                
-                .ai-handwriting-indie {
-                    font-family: 'Indie Flower', cursive;
-                }
-                
-                .ai-handwriting-marker {
-                    font-family: 'Permanent Marker', cursive;
-                }
+                .ai-handwriting { font-family: 'Caveat', cursive; }
+                .ai-handwriting-indie { font-family: 'Indie Flower', cursive; }
+                .ai-handwriting-marker { font-family: 'Permanent Marker', cursive; }
             `;
             document.head.appendChild(style);
         }
         
-        console.log('✨ AI Drawing System initialized');
+        console.log('✨ AI Drawing System + KA Narration Bar initialized');
+    }
+
+    // ── Narration subtitle helpers ──────────────────────────────────
+    showNarration(text) {
+        if (!this.narrationBar || !text) return;
+        clearTimeout(this._narrationHideTimer);
+        this.narrationBar.textContent = '';
+        this.narrationBar.style.display = 'block';
+        this.narrationBar.style.opacity = '1';
+        // Typewriter reveal: 35ms per char, max 2s
+        const chars = [...text];
+        const delay = Math.min(35, 1800 / (chars.length || 1));
+        chars.forEach((ch, i) => {
+            setTimeout(() => {
+                if (this.narrationBar) this.narrationBar.textContent += ch;
+            }, i * delay);
+        });
+        // Auto-hide 4s after last char
+        this._narrationHideTimer = setTimeout(() => this.hideNarration(), text.length * delay + 4000);
+    }
+
+    hideNarration() {
+        if (!this.narrationBar) return;
+        this.narrationBar.style.opacity = '0';
+        setTimeout(() => {
+            if (this.narrationBar) this.narrationBar.style.display = 'none';
+        }, 380);
+    }
+
+    // ==================== TEACHING SCRIPT PLAYBACK ====================
+
+    initTeachingControls() {
+        if (this.teachPlayBtn) {
+            this.teachPlayBtn.addEventListener('click', () => this.startTeachingPlayback());
+        }
+        if (this.teachPauseBtn) {
+            this.teachPauseBtn.addEventListener('click', () => this.pauseTeachingPlayback());
+        }
+        if (this.teachSkipBtn) {
+            this.teachSkipBtn.addEventListener('click', () => this.skipTeachingPhase());
+        }
+        this.updateTeachingStatus('Teaching: Idle');
+        this.setPhaseBadge('Phase: Idle');
+    }
+
+    queueTeachingPlayback(script, commands) {
+        this.pendingTeachingScript = Array.isArray(script) ? script : [];
+        this.pendingTeachingCommands = Array.isArray(commands) ? commands : [];
+
+        this.teachingState.stop = true;
+        this.teachingState.paused = false;
+        this.teachingState.skip = false;
+        this.teachingState.phaseIndex = 0;
+        this.teachingState.drawnAllCommands = false;
+        this.teachingState.token += 1;
+
+        const phaseCount = this.pendingTeachingScript.length;
+        this.updateTeachingStatus(`Teaching: Ready (${phaseCount} phase${phaseCount === 1 ? '' : 's'})`);
+        this.setPhaseBadge('Phase: Ready');
+
+        this.startTeachingPlayback();
+    }
+
+    async startTeachingPlayback() {
+        if (this.teachingState.status === 'playing' && !this.teachingState.paused) {
+            return;
+        }
+
+        if (this.teachingState.status === 'playing' && this.teachingState.paused) {
+            this.teachingState.paused = false;
+            this.updateTeachingStatus('Teaching: Playing');
+            this.setPhaseBadge('Phase: Playing');
+            return;
+        }
+
+        const script = this.pendingTeachingScript.length > 0 ? this.pendingTeachingScript : this.lastTeachingScript;
+        if (!script || script.length === 0) {
+            this.updateTeachingStatus('Teaching: No script');
+            this.setPhaseBadge('Phase: --');
+            return;
+        }
+
+        const commands = this.pendingTeachingCommands.length > 0 ? this.pendingTeachingCommands : [];
+        const stageMap = this.groupCommandsByStage(commands);
+
+        this.teachingState.status = 'playing';
+        this.teachingState.paused = false;
+        this.teachingState.stop = false;
+        this.teachingState.skip = false;
+        this.teachingState.drawnAllCommands = false;
+        this.teachingState.token += 1;
+        const token = this.teachingState.token;
+
+        this.updateTeachingStatus('Teaching: Playing');
+        this.setPhaseBadge('Phase: Playing');
+
+        for (let i = 0; i < script.length; i += 1) {
+            if (this.teachingState.stop || this.teachingState.token !== token) {
+                break;
+            }
+
+            const phase = script[i] || {};
+            const phaseTitle = phase.title || phase.phase || `Phase ${i + 1}`;
+            this.teachingState.phaseIndex = i;
+            this.updateTeachingStatus(`Teaching: ${phaseTitle} (${i + 1}/${script.length})`);
+            this.setPhaseBadge(`Phase: ${phaseTitle}`);
+
+            // ── Khan Academy style: show narration subtitle + draw on canvas ──
+            if (phase.narration) {
+                this.showNarration(phase.narration);
+            }
+            if (phase.prompt) {
+                // Quick check beat: show as narration + feedback
+                this.showNarration(`🤔 ${phase.prompt}`);
+                this.showValidationFeedback(`Quick check: ${phase.prompt}`, 'info');
+            }
+
+            await this.waitForResume(token);
+
+            // ── Primary path: beat carries its own draw instruction ──
+            if (phase.draw && phase.draw !== 'none') {
+                await this.executeKABeat(phase);
+            } else {
+                // ── Legacy path: look up staged canvas_commands ──
+                const stageKey = phase.visual_stage || 'all';
+                let phaseCommands = stageMap[stageKey] || [];
+
+                if (phaseCommands.length === 0 && !this.teachingState.drawnAllCommands && stageMap.all && stageMap.all.length > 0) {
+                    phaseCommands = stageMap.all;
+                    this.teachingState.drawnAllCommands = true;
+                }
+
+                if (phaseCommands.length > 0) {
+                    await this.startAIDrawing(phaseCommands);
+                }
+            }
+
+            const pauseAfter = Number(phase.pause_after_ms || 600);
+            if (pauseAfter > 0) {
+                await this.waitWithPause(pauseAfter, token);
+            }
+
+            if (this.teachingState.skip) {
+                this.teachingState.skip = false;
+            }
+        }
+
+        if (!this.teachingState.stop && this.teachingState.token === token) {
+            this.teachingState.status = 'idle';
+            this.updateTeachingStatus('Teaching: Complete');
+            this.setPhaseBadge('Phase: Complete');
+            setTimeout(() => this.hideNarration(), 1500);
+        }
+    }
+
+    // ── Khan Academy Beat Executor ──────────────────────────────────────────
+    // Converts a single LLM beat (draw type + position_hint + label + color)
+    // into an actual canvas drawing action.
+    _kaLayout(hint, canvasW, canvasH, beatIndex) {
+        // Map position_hint → world coordinates
+        // Canvas world coords: 0..canvasW, 0..canvasH
+        const w = canvasW || 1200;
+        const h = canvasH || 800;
+        const map = {
+            top_left:      { x: w * 0.15, y: h * 0.12 },
+            top_center:    { x: w * 0.50, y: h * 0.10 },
+            top_right:     { x: w * 0.80, y: h * 0.12 },
+            center_left:   { x: w * 0.25, y: h * 0.45 },
+            center:        { x: w * 0.50, y: h * 0.45 },
+            center_right:  { x: w * 0.72, y: h * 0.45 },
+            bottom_left:   { x: w * 0.20, y: h * 0.78 },
+            bottom_center: { x: w * 0.50, y: h * 0.80 },
+            bottom_right:  { x: w * 0.78, y: h * 0.78 },
+        };
+        // Default: cascade down-center for sequential beats
+        return map[hint] || { x: w * 0.50, y: h * (0.15 + (beatIndex % 7) * 0.10) };
+    }
+
+    async executeKABeat(beat) {
+        const cw = this.canvas.width  / (this.scale || 1);
+        const ch = this.canvas.height / (this.scale || 1);
+        const idx = this.teachingState.phaseIndex || 0;
+        const pos = this._kaLayout(beat.position_hint, cw, ch, idx);
+        const color = beat.color || '#00d4ff';
+        const label = beat.label || beat.title || '';
+        const fontSize = Math.min(Number(beat.size) || 24, 48);
+        const drawDuration = 900; // ms for animated strokes
+
+        switch (beat.draw) {
+            case 'title_text': {
+                // Large bold title centred at top
+                const titlePos = this._kaLayout('top_center', cw, ch, 0);
+                await this.aiWriteText({
+                    content: label,
+                    position: { x: titlePos.x - (label.length * fontSize * 0.32), y: titlePos.y },
+                    font: 'Permanent Marker',
+                    color: color,
+                    size: Math.max(fontSize, 32),
+                    duration: label.length * 55
+                });
+                break;
+            }
+            case 'circle': {
+                const radius = Math.min(cw, ch) * 0.12;
+                await this.aiDrawCircle(
+                    { x: pos.x, y: pos.y, radius },
+                    color, drawDuration
+                );
+                if (label) {
+                    await this.aiWriteText({
+                        content: label,
+                        position: { x: pos.x - label.length * 5, y: pos.y + radius + 18 },
+                        font: 'Indie Flower', color, size: 16, duration: label.length * 45
+                    });
+                }
+                break;
+            }
+            case 'ellipse': {
+                const rx = Math.min(cw, ch) * 0.18;
+                const ry = Math.min(cw, ch) * 0.11;
+                await this.aiDrawEllipse(
+                    { x: pos.x, y: pos.y, rx, ry },
+                    color, drawDuration
+                );
+                if (label) {
+                    await this.aiWriteText({
+                        content: label,
+                        position: { x: pos.x - label.length * 5, y: pos.y + ry + 18 },
+                        font: 'Indie Flower', color, size: 16, duration: label.length * 45
+                    });
+                }
+                break;
+            }
+            case 'rectangle': {
+                const bw = cw * 0.18;
+                const bh = ch * 0.10;
+                await this.aiDrawRectangle(
+                    { x: pos.x - bw / 2, y: pos.y - bh / 2, width: bw, height: bh },
+                    color, drawDuration
+                );
+                if (label) {
+                    await this.aiWriteText({
+                        content: label,
+                        position: { x: pos.x - label.length * 5, y: pos.y },
+                        font: 'Indie Flower', color, size: 15, duration: label.length * 45
+                    });
+                }
+                break;
+            }
+            case 'arrow': {
+                // Draw a downward or rightward arrow depending on position_hint
+                const dx = cw * 0.08;
+                const start = [pos.x, pos.y];
+                const end   = [pos.x + dx, pos.y];
+                await this.aiDrawArrow({ start, end }, color, drawDuration);
+                if (label) {
+                    await this.aiWriteText({
+                        content: label,
+                        position: { x: pos.x, y: pos.y - 22 },
+                        font: 'Indie Flower', color, size: 15, duration: label.length * 45
+                    });
+                }
+                break;
+            }
+            case 'label_text': {
+                await this.aiWriteText({
+                    content: label,
+                    position: { x: pos.x - label.length * (fontSize * 0.3), y: pos.y },
+                    font: 'Caveat', color, size: fontSize, duration: label.length * 50
+                });
+                break;
+            }
+            case 'underline': {
+                const ulLen = (label.length || 12) * fontSize * 0.55;
+                const startU = [pos.x - ulLen / 2, pos.y + 6];
+                const endU   = [pos.x + ulLen / 2, pos.y + 6];
+                await this.aiDrawLine(startU, endU, color, 500);
+                break;
+            }
+            case 'line': {
+                const lineEnd = [pos.x + cw * 0.12, pos.y];
+                await this.aiDrawLine([pos.x, pos.y], lineEnd, color, drawDuration);
+                break;
+            }
+            case 'highlight': {
+                await this.aiHighlight({
+                    position: { x: pos.x - 80, y: pos.y - 20, width: 160, height: 40 },
+                    color: color,
+                    duration: 600
+                });
+                break;
+            }
+            default:
+                console.warn('[KA Beat] Unknown draw type:', beat.draw);
+        }
+    }
+
+    // ── Ellipse drawing (biology-style oval membranes) ──
+    async aiDrawEllipse(pos, color, duration) {
+        const { x, y, rx, ry } = pos;
+        const numSteps = Math.max(40, Math.floor(duration / 16));
+        const stepDelay = duration / numSteps;
+
+        for (let i = 0; i <= numSteps; i++) {
+            const progress = i / numSteps;
+            const angle = progress * Math.PI * 2;
+            const cx = x + rx * Math.cos(angle);
+            const cy = y + ry * Math.sin(angle);
+            const screenPos = this.worldToScreen(cx, cy);
+            this.movePenCursor(screenPos.x, screenPos.y);
+
+            this.ctx.save();
+            this.ctx.translate(this.offsetX, this.offsetY);
+            this.ctx.scale(this.scale, this.scale);
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.ellipse(x, y, rx, ry, 0, 0, angle);
+            this.ctx.stroke();
+            this.ctx.restore();
+
+            await this.delay(stepDelay);
+        }
+
+        this.paths.push({ type: 'ai_ellipse', x, y, rx, ry, color });
+        this.saveState();
+    }
+
+    pauseTeachingPlayback() {
+        if (this.teachingState.status !== 'playing') {
+            return;
+        }
+        this.teachingState.paused = true;
+        this.updateTeachingStatus('Teaching: Paused');
+        this.setPhaseBadge('Phase: Paused');
+    }
+
+    skipTeachingPhase() {
+        if (this.teachingState.status !== 'playing') {
+            return;
+        }
+        this.teachingState.skip = true;
+        this.updateTeachingStatus('Teaching: Skipping');
+        this.setPhaseBadge('Phase: Skipping');
+    }
+
+    updateTeachingStatus(message) {
+        if (this.teachStatus) {
+            this.teachStatus.textContent = message;
+        }
+    }
+
+    setPhaseBadge(message) {
+        if (this.phaseBadge) {
+            this.phaseBadge.textContent = message;
+        }
+    }
+
+    async waitForResume(token) {
+        while (this.teachingState.paused && !this.teachingState.stop && this.teachingState.token === token) {
+            await this.delay(150);
+        }
+    }
+
+    async waitWithPause(durationMs, token) {
+        let remaining = durationMs;
+        while (remaining > 0 && !this.teachingState.stop && this.teachingState.token === token) {
+            await this.waitForResume(token);
+            if (this.teachingState.skip) {
+                break;
+            }
+            const step = Math.min(200, remaining);
+            await this.delay(step);
+            remaining -= step;
+        }
+    }
+
+    groupCommandsByStage(commands) {
+        const stageMap = {};
+        for (const cmd of commands || []) {
+            const stageKey = cmd.visual_stage || cmd.stage || cmd.concept_tag || 'all';
+            if (!stageMap[stageKey]) {
+                stageMap[stageKey] = [];
+            }
+            stageMap[stageKey].push(cmd);
+        }
+        return stageMap;
     }
     
     async startAIDrawing(commands) {
@@ -1168,9 +1702,17 @@ class CanvasWhiteboard {
     }
     
     async aiDrawTree(cmd) {
-        // Tree drawing is handled by multiple line + circle commands
-        // This is a placeholder for complex tree visualizations
-        console.log('Drawing tree:', cmd);
+        try {
+            const treeData = typeof cmd.content === 'string'
+                ? JSON.parse(cmd.content)
+                : cmd.content;
+            if (treeData && window.modeManager) {
+                window.modeManager.switchToTree(treeData);
+                await this.delay(cmd.duration || 1500);
+            }
+        } catch (e) {
+            console.warn('aiDrawTree: failed to parse tree data', e);
+        }
     }
     
     async aiHighlight(cmd) {
@@ -1313,8 +1855,9 @@ class CanvasWhiteboard {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎨 Initializing Canvas Whiteboard...');
     
-    // Initialize canvas whiteboard
+    // Initialize canvas whiteboard and expose for ModeManager
     const canvasWhiteboard = new CanvasWhiteboard();
+    window.canvasWhiteboard = canvasWhiteboard;
     
     // Save initial empty state
     canvasWhiteboard.saveState();

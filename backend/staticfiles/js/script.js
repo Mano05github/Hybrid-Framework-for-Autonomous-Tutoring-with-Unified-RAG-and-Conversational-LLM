@@ -316,15 +316,18 @@ class ParticleSystem {
         if (!this.canvas) return;
         
         this.ctx = this.canvas.getContext('2d');
-        this.width = this.canvas.width = Math.min(1000, window.innerWidth - 40);
-        this.height = this.canvas.height = 600;
+        this.width = 0;
+        this.height = 0;
         this.particles = [];
-        this.particleCount = 100;
+        this.particleCount = 220;
+        this.dpr = Math.max(1, window.devicePixelRatio || 1);
         
         this.init();
     }
     
     init() {
+        this.resize();
+
         // Programming symbols array
         const programmingSymbols = ['{', '}', '(', ')', '[', ']', '<', '>', '/', '\\', ';', ':', '=', '+', '-', '*', '&', '|', '!', '?', '#', '$', '%', '@'];
         
@@ -333,15 +336,25 @@ class ParticleSystem {
             this.particles.push({
                 x: Math.random() * this.width,
                 y: Math.random() * this.height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
-                size: Math.random() * 3 + 1,
-                opacity: Math.random() * 0.5 + 0.2,
+                vx: (Math.random() - 0.5) * 1.1,
+                vy: (Math.random() - 0.5) * 1.1,
+                size: Math.random() * 2 + 1,
+                opacity: Math.random() * 0.6 + 0.35,
                 symbol: programmingSymbols[Math.floor(Math.random() * programmingSymbols.length)]
             });
         }
         
         this.animate();
+    }
+
+    resize() {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.canvas.width = Math.floor(this.width * this.dpr);
+        this.canvas.height = Math.floor(this.height * this.dpr);
+        this.canvas.style.width = `${this.width}px`;
+        this.canvas.style.height = `${this.height}px`;
+        this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     }
     
     drawParticles() {
@@ -360,12 +373,12 @@ class ParticleSystem {
             
             // Draw particle
             this.ctx.fillStyle = `rgba(0, 212, 255, ${particle.opacity})`;
-            this.ctx.font = `${particle.size * 8}px serif`;
+            this.ctx.font = `${particle.size * 7}px "Space Grotesk", "Inter", sans-serif`;
             this.ctx.fillText(particle.symbol, particle.x, particle.y);
             
             // Draw glow
             this.ctx.beginPath();
-            this.ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
+            this.ctx.arc(particle.x, particle.y, particle.size * 1.2, 0, Math.PI * 2);
             this.ctx.fillStyle = `rgba(0, 212, 255, ${particle.opacity * 0.3})`;
             this.ctx.fill();
         });
@@ -535,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize canvas animations
     const waveformAnimator = new WaveformAnimator('waveform-canvas');
-    const particleSystem = new ParticleSystem('particles-canvas');
+    const particleSystem = new ParticleSystem('particles-bg');
     const aiWaveform = new AIWaveformAnimator('ai-waveform');
     
     // Initialize smooth scroll handler
@@ -561,9 +574,8 @@ window.addEventListener('resize', () => {
         console.log('Window resized - recalculating layouts');
         
         // Reinitialize canvas elements if needed
-        const particlesCanvas = document.getElementById('particles-canvas');
-        if (particlesCanvas) {
-            particlesCanvas.width = Math.min(1000, window.innerWidth - 40);
+        if (particleSystem) {
+            particleSystem.resize();
         }
     }, 250);
 });

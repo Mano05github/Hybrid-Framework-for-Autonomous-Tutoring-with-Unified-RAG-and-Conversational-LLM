@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject Hub | Vaathiyar AI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/landing.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/auth-guard.js"></script>
+    <script>
+        (async () => {
+            const ok = await AuthGuard.checkAuth();
+            if (!ok) window.location.href = 'login.html';
+        })();
+    </script>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        {% verbatim %}
+        const { useState, useEffect, useCallback } = React;
+
+        /* ─── helpers ─── */
+        const getSubjectIdFromUrl = () => {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('subject_id');
+        };
+
+        const SUBJECT_ICONS = [
+            { keywords: ['math', 'maths', 'calculus', 'algebra'],  icon: 'calculator' },
+            { keywords: ['physics', 'quantum', 'mechanics'],        icon: 'atom' },
+            { keywords: ['chemistry', 'chem'],                      icon: 'flask-conical' },
+            { keywords: ['ai', 'ml', 'machine', 'neural', 'deep'],  icon: 'brain' },
+            { keywords: ['english', 'language', 'writing', 'lit'],  icon: 'book-open' },
+            { keywords: ['biology', 'bio'],                          icon: 'dna' },
+            { keywords: ['computer', 'cs', 'programming', 'code'],  icon: 'code-2' },
+            { keywords: ['history'],                                 icon: 'scroll' },
+            { keywords: ['geography', 'geo'],                        icon: 'globe' },
+        ];
+
+        const getSubjectIcon = (name) => {
+            const lower = (name || '').toLowerCase();
+            for (const e of SUBJECT_ICONS) {
+                if (e.keywords.some(k => lower.includes(k))) return e.icon;
+            }
+            return 'layers';
+        };
+
+        const DIFF_LABELS = {
+            beginner:     'Beginner',
+            intermediate: 'Intermediate',
+            advanced:     'Advanced',
+        };
+
+        /* ─── Sidebar ─── */
+        const Sidebar = ({ user, onLogout }) => {
+            useEffect(() => { lucide.createIcons(); });
+
+            const navItems = [
+                { icon: 'layout-dashboard', label: 'Dashboard', href: 'dashboard.html', active: false },
+                { icon: 'book-open',        label: 'Learn',     href: 'learn.html',     active: true  },
+            ];
+
+            return (
+                <aside className="db-sidebar">
+                    <div className="db-sidebar-brand">
+                        <div className="db-brand-icon">🤖</div>
+                        <span className="db-brand-name">VAATHIYAR</span>
+                    </div>
+
+                    <nav className="db-nav">
+                        {navItems.map((item, i) => (
+                            <a key={i} href={item.href}
+                               className={`db-nav-item${item.active ? ' active' : ''}`}>
+                                <i data-lucide={item.icon} className="db-nav-icon"></i>
+                                <span>{item.label}</span>
+                            </a>
+                        ))}
+                    </nav>
+
+                    <div className="db-sidebar-footer">
+                        <div className="db-user-row">
+                            <div className="db-avatar">
+                                {user?.username?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                                <div className="db-user-name">{user?.username || 'User'}</div>
+                                <div className="db-user-role">Student</div>
+                            </div>
+                        </div>
+                        <button className="db-logout-btn" onClick={onLogout}>
+                            <i data-lucide="log-out" style={{ width: 14, height: 14 }}></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </aside>
+            );
+        };
+
+        /* ─── Topic Card ─── */
+        const TopicCard = ({ topic, subjectName }) => {
+            useEffect(() => { lucide.createIcons(); });
+
+            const pct     = topic.completion_pct || 0;
+            const isDone  = pct === 100;
+            const diffKey = topic.difficulty || 'beginner';
+
+            const sessionHref =
+                `pbl.html?subject_id=${encodeURIComponent(subjectName)}&topic=${encodeURIComponent(topic.title)}&topic_id=${topic.id}`;
+
+            return (
+                <div className="sh-topic-card">
+                    <div className="sh-topic-card-header">
+                        <h3 className="sh-topic-name">{topic.title}</h3>
+                        <span className={`sh-badge sh-badge--${diffKey}`}>
+                            {DIFF_LABELS[diffKey]}
+                        </span>
+                    </div>
+
+                    {topic.description ? (
+                        <p className="sh-topic-desc">{topic.description}</p>
+                    ) : (
+                        <p className="sh-topic-desc" style={{ fontStyle: 'italic' }}>
+                            No description available.
+                        </p>
+                    )}
+
+                    <div className="sh-completion-row">
+                        <span className="sh-completion-label">
+                            {isDone ? 'Topic completion' : 'Completion'}
+                        </span>
+                        <span className="sh-completion-pct">{pct}%</span>
+                    </div>
+                    <div className="sh-topic-bar-track">
+                        <div className="sh-topic-bar-fill" style={{ width: `${pct}%` }}></div>
+                    </div>
+
+                    <a href={sessionHref}
+                       className={`sh-start-btn ${isDone ? 'sh-start-btn--filled' : 'sh-start-btn--ghost'}`}>
+                        Start Session
+                    </a>
+                </div>
+            );
+        };
+
+        /* ─── Main SubjectHub ─── */
+        const SubjectHub = () => {
+            const [user,        setUser]        = useState(null);
+            const [subject,     setSubject]     = useState(null);
+            const [subjectPct,  setSubjectPct]  = useState(0);
+            const [topics,      setTopics]      = useState([]);
+            const [difficulty,  setDifficulty]  = useState('');
+            const [loading,     setLoading]     = useState(true);
+            const [error,       setError]       = useState(null);
+
+            const subjectId = getSubjectIdFromUrl();
+
+            const handleLogout = async () => {
+                try { await fetch('/api/users/logout/', { method: 'POST', credentials: 'include' }); } catch(e) {}
+                localStorage.removeItem('auth_token');
+                window.location.href = 'login.html';
+            };
+
+            const fetchData = useCallback(async (diff) => {
+                if (!subjectId) { setError('No subject specified.'); setLoading(false); return; }
+                setLoading(true);
+                const url = `/api/core/subjects/${subjectId}/topics-stats/${diff ? `?difficulty=${diff}` : ''}`;
+                try {
+                    const res = await fetch(url, { credentials: 'include' });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    setSubject(data.subject);
+                    setSubjectPct(data.subject_pct || 0);
+                    setTopics(data.topics || []);
+                } catch(e) {
+                    setError('Failed to load subject data.');
+                } finally {
+                    setLoading(false);
+                }
+            }, [subjectId]);
+
+            useEffect(() => {
+                setUser(AuthGuard.getUser());
+                fetchData('');
+            }, [fetchData]);
+
+            useEffect(() => { lucide.createIcons(); });
+
+            const handleDiffChange = (e) => {
+                const val = e.target.value;
+                setDifficulty(val);
+                fetchData(val);
+            };
+
+            const iconName = subject ? getSubjectIcon(subject.name) : 'layers';
+
+            return (
+                <div className="db-layout">
+                    <Sidebar user={user} onLogout={handleLogout} />
+
+                    <main className="db-main" style={{ padding: 0 }}>
+
+                        {/* ── Subject Header ── */}
+                        <div className="sh-header">
+                            <div className="sh-header-top">
+                                <div className="sh-header-left">
+                                    <p className="sh-subject-label">Subject Title</p>
+                                    <h1 className="sh-subject-name">
+                                        {loading && !subject ? 'Loading…' : (subject?.name || '—')}
+                                    </h1>
+                                    <p className="sh-subtitle">
+                                        Explore topics and start your learning session
+                                    </p>
+                                </div>
+                                <div className="sh-header-right">
+                                    <span className="sh-completed-pct">{subjectPct}% completed</span>
+                                    <div className="sh-subject-bar-track" style={{ width: '100%' }}>
+                                        <div className="sh-subject-bar-fill" style={{ width: `${subjectPct}%` }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Controls ── */}
+                        <div className="sh-controls">
+                            <a href="learn.html" className="sh-back-btn">
+                                <i data-lucide="arrow-left" style={{ width: 14, height: 14 }}></i>
+                                Back to Learn
+                            </a>
+                            <div className="sh-filter-wrap">
+                                <span className="sh-filter-label">(Optional)</span>
+                                <select
+                                    className="sh-filter-select"
+                                    value={difficulty}
+                                    onChange={handleDiffChange}
+                                >
+                                    <option value="">Beginner / Intermediate / Advanced</option>
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* ── Topics Body ── */}
+                        <div className="sh-body">
+                            {error ? (
+                                <div className="sh-empty">{error}</div>
+                            ) : loading ? (
+                                <div className="sh-empty">Loading topics…</div>
+                            ) : (
+                                <>
+                                    <div className="sh-section-title">Topics Section</div>
+                                    <div className="sh-topics-grid">
+                                        {topics.length === 0 ? (
+                                            <div className="sh-empty">
+                                                {difficulty
+                                                    ? `No ${DIFF_LABELS[difficulty]} topics found for this subject.`
+                                                    : 'No topics found for this subject yet.'}
+                                            </div>
+                                        ) : (
+                                            topics.map(t => (
+                                                <TopicCard
+                                                    key={t.id}
+                                                    topic={t}
+                                                    subjectName={subject?.name || ''}
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                    </main>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<SubjectHub />);
+        {% endverbatim %}
+    </script>
+</body>
+</html>

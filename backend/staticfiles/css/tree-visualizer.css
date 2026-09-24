@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════════
+   Tree Visualizer — SVG Overlay Styles
+   Used by TreeVisualizer + ModeManager
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Overlay container ──────────────────────────────────── */
+#tree-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    background: rgba(6, 8, 18, 0.88);
+    overflow: hidden;
+}
+
+#tree-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#tree-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* ── Connector links ────────────────────────────────────── */
+.tree-link {
+    fill: none;
+    stroke: rgba(0, 212, 255, 0.35);
+    stroke-width: 1.5;
+    stroke-dasharray: var(--link-len, 300);
+    stroke-dashoffset: var(--link-len, 300);
+    animation: treeDrawLink 0.55s ease forwards;
+    animation-delay: var(--link-delay, 0ms);
+}
+
+@keyframes treeDrawLink {
+    to { stroke-dashoffset: 0; }
+}
+
+/* ── Node group ─────────────────────────────────────────── */
+.tree-node {
+    cursor: default;
+}
+
+.tree-node.has-children {
+    cursor: pointer;
+}
+
+/* ── Node circles ───────────────────────────────────────── */
+.tree-node circle {
+    fill: rgba(6, 8, 18, 0.92);
+    stroke: rgba(0, 212, 255, 0.75);
+    stroke-width: 1.5;
+    r: 0;
+    animation: treeNodeGrow 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: var(--node-delay, 0ms);
+}
+
+.tree-node.root-node circle {
+    stroke: rgba(120, 210, 255, 1);
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+}
+
+@keyframes treeNodeGrow {
+    from { r: 0; opacity: 0; }
+    to   { r: var(--node-r, 28); opacity: 1; }
+}
+
+/* ── Node labels ────────────────────────────────────────── */
+.tree-node text {
+    font-family: 'Caveat', cursive;
+    font-size: 13px;
+    fill: rgba(220, 235, 255, 0.92);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    opacity: 0;
+    animation: treeFadeIn 0.3s ease forwards;
+    animation-delay: var(--text-delay, 0ms);
+}
+
+.tree-node.root-node text {
+    font-size: 16px;
+    font-weight: 700;
+    fill: #ffffff;
+}
+
+@keyframes treeFadeIn {
+    to { opacity: 1; }
+}
+
+/* ── Toggle indicator (+/−) ─────────────────────────────── */
+.tree-node .toggle-indicator {
+    font-family: 'Inter', 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    fill: rgba(0, 212, 255, 0.65);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    opacity: 0;
+    animation: treeFadeIn 0.3s ease forwards;
+    animation-delay: var(--text-delay, 0ms);
+}
+
+/* ── Active / highlighted node ──────────────────────────── */
+.tree-node.active circle {
+    stroke: #00ffa0;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.65));
+    animation: treeNodeGrow 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               treePulse 1.4s ease-in-out 0.4s infinite;
+}
+
+@keyframes treePulse {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 255, 160, 0.65)); }
+    50%       { filter: drop-shadow(0 0 3px  rgba(0, 255, 160, 0.2));  }
+}
+
+/* ── Mode Badge ─────────────────────────────────────────── */
+.mode-badge {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    z-index: 20;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 0.28rem 0.75rem;
+    border-radius: 20px;
+    background: rgba(0, 212, 255, 0.10);
+    border: 1px solid rgba(0, 212, 255, 0.30);
+    color: rgba(0, 212, 255, 0.80);
+    transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+    pointer-events: none;
+    user-select: none;
+}
+
+.mode-badge.tree-mode {
+    background: rgba(0, 255, 160, 0.10);
+    border-color: rgba(0, 255, 160, 0.38);
+    color: rgba(0, 255, 160, 0.88);
+}
+
+/* ── Canvas dim when tree is active ────────────────────── */
+.canvas-wrapper {
+    transition: opacity 0.4s ease;
+}
+
+.canvas-wrapper.tree-active {
+    opacity: 0.06;
+    pointer-events: none;
+}

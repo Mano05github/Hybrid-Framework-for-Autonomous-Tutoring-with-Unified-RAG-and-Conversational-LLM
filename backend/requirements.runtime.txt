@@ -1,0 +1,32 @@
+﻿django>=5.0
+djangorestframework
+channels>=4.0
+channels-redis
+daphne
+psycopg2-binary
+pgvector
+openai
+google-generativeai
+elevenlabs>=1.0.0                   # ElevenLabs TTS
+langchain
+langchain-community
+python-dotenv
+requests
+django-cors-headers
+SpeechRecognition
+pydub
+fastapi
+uvicorn
+soundfile
+# Code Sandbox (Gap 3)
+RestrictedPython>=6.0
+# RAG System - Basic
+chromadb
+sentence-transformers
+pypdf
+spacy
+# Omni-RAG - Advanced Components
+rank-bm25              # BM25 keyword search
+setfit                 # SetFit for intent classification
+torch                  # PyTorch for ML models
+numpy                  # Numerical operations

@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Workspace | Vaathiyar</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/landing.css">
+    <link rel="stylesheet" href="/static/css/neural-orb.css">
+    <link rel="stylesheet" href="/static/css/workspace-layout.css">
+    <link rel="stylesheet" href="/static/css/teaching-canvas.css">
+    <link rel="stylesheet" href="/static/css/coding-workspace.css">
+    <link rel="stylesheet" href="/static/css/assessment-workspace.css">
+    <style>
+        /* ═══════════════════════════════════════════════════
+           Knowledge Modules — Supervisor Page (Mockup Match)
+           ═══════════════════════════════════════════════════ */
+
+        /* Full right panel takes over as the module browser */
+        #topic-selector {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            padding: 2.5rem 2.5rem 1.5rem;
+            background: #0d0f1e;
+        }
+        .km-heading {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+        }
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.2rem;
+            align-content: start;
+        }
+        @media (max-width: 900px) { .topic-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 550px) { .topic-grid { grid-template-columns: 1fr; } }
+
+        .topic-card {
+            background: rgba(13, 16, 36, 0.9);
+            border: 1px solid rgba(0, 210, 255, 0.22);
+            border-radius: 18px;
+            padding: 1.8rem 1.4rem 1.3rem;
+            cursor: pointer;
+            transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.6rem;
+            position: relative;
+            overflow: hidden;
+            min-height: 160px;
+        }
+        .topic-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% -10%, rgba(0,200,255,0.07), transparent 65%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .topic-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 220, 255, 0.6);
+            box-shadow: 0 16px 50px rgba(0, 180, 255, 0.18), 0 0 0 1px rgba(0,200,255,0.1);
+        }
+        .topic-card:hover::after { opacity: 1; }
+
+        .topic-icon-wrap {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(0, 180, 255, 0.1);
+            border: 1px solid rgba(0, 200, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            flex-shrink: 0;
+            margin-bottom: 0.3rem;
+        }
+        .topic-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.2px;
+            flex: 1;
+        }
+        .topic-arrow {
+            align-self: flex-end;
+            font-size: 1.1rem;
+            color: rgba(0, 200, 255, 0.6);
+            transition: transform 0.2s ease, color 0.2s ease;
+            margin-top: auto;
+        }
+        .topic-card:hover .topic-arrow {
+            color: #00d4ff;
+            transform: translateX(4px);
+        }
+
+        /* Toolbar button style used in teaching.js */
+        .tw-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            padding: 0.45rem 0.55rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .tw-btn:hover { background: rgba(0,200,255,0.12); color: #fff; border-color: rgba(0,200,255,0.3); }
+        .tw-btn.active { background: rgba(0,200,255,0.18); border-color: rgba(0,200,255,0.5); color: #00d4ff; }
+        .tw-btn svg { width: 16px; height: 16px; }
+        details summary::-webkit-details-marker { display: none; }
+        details[open] summary::after { content: ' ▲'; }
+        details summary::after { content: ' ▼'; }
+
+        #orb-canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .supervisor-ui {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            justify-content: center; /* Changed from space-between to center since header is removed */
+            padding: 2rem;
+            transition: transform var(--transition-duration) var(--transition-easing);
+            pointer-events: none; /* Let clicks pass to canvas if needed */
+        }
+
+        .top-bar {
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        .transcript-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .transcript-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+            max-width: 800px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        .transcript-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .input-area {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        .glass-input-container {
+            background: rgba(10, 10, 15, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+            transition: border-color 0.3s;
+        }
+        .glass-input-container:focus-within {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
+        }
+
+        .chat-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            flex: 1;
+            outline: none;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #fff;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 0.5rem;
+        }
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+        .icon-btn.mic-active {
+            background: var(--accent-error);
+            box-shadow: 0 0 20px var(--accent-error);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 0, 85, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); }
+        }
+        
+        .status-badge {
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--accent-primary);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+    </style>
+
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Three.js + Post Processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+    <!-- Utils -->
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/websocket-client.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Vertex Shader -->
+    <script type="x-shader/x-vertex" id="vertexshader">
+        uniform float time;
+        uniform float size;
+        uniform vec3 color;
+        uniform float amplitude;
+        attribute float shift;
+        varying vec3 vColor;
+        
+        void main() {
+            vColor = color;
+            vec3 newPos = position;
+            newPos.x += sin(time * 2.0 + shift) * amplitude;
+            newPos.y += cos(time * 1.5 + shift) * amplitude;
+            newPos.z += sin(time * 1.0 + shift) * amplitude;
+            vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);
+            gl_PointSize = size * (100.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    </script>
+    
+    <!-- Fragment Shader -->
+    <script type="x-shader/x-fragment" id="fragmentshader">
+        uniform sampler2D pointTexture;
+        varying vec3 vColor;
+        void main() {
+            gl_FragColor = vec4(vColor, 1.0);
+            gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
+        }
+    </script>
+
+    <!-- Logic -->
+    <script src="/static/js/orb-visualizer.js"></script>
+    <script src="/static/js/neural-orb.js"></script>
+    <script src="/static/js/workspace-transitions.js"></script>
+    <script src="/static/js/workspace-manager.js"></script>
+    <script src="/static/js/workspaces/teaching.js?v=5"></script>
+    <script src="/static/js/workspaces/coding.js?v=2"></script>
+    <script src="/static/js/workspaces/assessment.js?v=2"></script>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <div class="vignette"></div>
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        {% verbatim %}
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        // --- Custom Cursor Hook ---
+        const useMousePosition = () => {
+             useEffect(() => {
+                 const dot = document.querySelector('.cursor-dot');
+                 const outline = document.querySelector('.cursor-outline');
+                 const updateMousePosition = ev => {
+                     if(dot && outline) {
+                         dot.style.left = `${ev.clientX}px`;
+                         dot.style.top = `${ev.clientY}px`;
+                         outline.animate({
+                             left: `${ev.clientX}px`,
+                             top: `${ev.clientY}px`
+                         }, { duration: 500, fill: "forwards" });
+                     }
+                 };
+                 window.addEventListener('mousemove', updateMousePosition);
+                 return () => window.removeEventListener('mousemove', updateMousePosition);
+             }, []);
+        };
+
+        // --- Voice Logic Hook ---
+        const useVoiceSupervisor = (orbRef, neuralOrbRef) => {
+            const [transcript, setTranscript] = useState("Ready for interaction");
+            const [isListening, setIsListening] = useState(false);
+            const [isConnected, setIsConnected] = useState(false);
+            const [sessionId, setSessionId] = useState(null);
+            
+            const mediaRecorderRef = useRef(null);
+            const audioStreamRef = useRef(null);
+            const chunksRef = useRef([]);
+
+            // Helper to update orb emotion (syncs both visualizers)
+            const setOrbState = (state) => {
+                if(orbRef.current) orbRef.current.setState(state);
+                if(neuralOrbRef.current) neuralOrbRef.current.updateState(state);
+            };
+
+            // Initialize Session & WebSocket
+            useEffect(() => {
+                const initSession = async () => {
+                    try {
+                        // Check Auth using API
+                        const user = await window.apiClient.getCurrentUser();
+                        if (!user || !user.id) {
+                            window.location.href = '/login.html';
+                            return;
+                        }
+
+                        // Start unlimited session (topic_id=null)
+                        const sess = await window.apiClient.startSession();
+                        setSessionId(sess.session_id);
+                        
+                        // Connect WS
+                        window.wsClient.connect(sess.session_id);
+                        window.wsClient.onConnect(() => {
+                            setIsConnected(true);
+                            setOrbState('NEUTRAL');
+                        });
+                        window.wsClient.onDisconnect(() => {
+                            setIsConnected(false);
+                            setOrbState('ALERT');
+                            setTranscript("Connection lost...");
+                        });
+                        
+                        // Handle Messages
+                        window.wsClient.onMessage((data) => {
+                            console.log("WS Message:", data);
+                            switch(data.type) {
+                                case 'thinking':
+                                    setTranscript(data.user_text 
+                                        ? `You said: "${data.user_text}" — thinking...`
+                                        : '🤔 Thinking...');
+                                    setOrbState('THINKING');
+                                    break;
+
+                                case 'ai_response':
+                                    setTranscript(data.message || data.text);
+                                    setOrbState('HAPPY');
+                                    setTimeout(() => setOrbState('NEUTRAL'), 3000);
+                                    break;
+
+                                case 'teacher_response':
+                                    // Show transcript
+                                    setTranscript(data.message || data.text);
+                                    setOrbState('HAPPY');
+                                    setTimeout(() => setOrbState('NEUTRAL'), 3000);
+                                    
+                                    // AUTO-OPEN teaching workspace
+                                    if (window.workspaceTransitions) {
+                                        window.workspaceTransitions.openWorkspace('teaching', {
+                                            message: data.message || data.text
+                                        });
+                                        console.log('🎓 Auto-opened teaching workspace');
+                                    }
+                                    
+                                    // Queue canvas commands if any came with the response
+                                    if (data.canvas_commands && data.canvas_commands.length > 0 && window.workspaceManager) {
+                                        data.canvas_commands.forEach(cmd => {
+                                            window.workspaceManager.queueCommand('teaching', cmd);
+                                        });
+                                        console.log(`🎨 Queued ${data.canvas_commands.length} canvas commands`);
+                                    } else {
+                                        // No canvas commands yet — signal backend that canvas is ready
+                                        // so it can generate them via the canvas_ready handler
+                                        setTimeout(() => {
+                                            if (window.wsClient) {
+                                                window.wsClient.sendMessage({ type: 'canvas_ready' });
+                                                console.log('📡 Sent canvas_ready to backend');
+                                            }
+                                        }, 800); // slight delay so workspace has time to open
+                                    }
+                                    break;
+                                
+                                case 'audio_ack':
+                                    // Update emotion if provided
+                                    if(data.emotion && orbRef.current) {
+                                        orbRef.current.updateEmotion(data.emotion);
+                                    }
+                                    
+                                    // Handle Canvas Commands
+                                    if(data.canvas_commands && window.workspaceManager) {
+                                        data.canvas_commands.forEach(cmd => {
+                                            // Queue commands for 'teaching' workspace (default destination for now)
+                                            window.workspaceManager.queueCommand('teaching', cmd);
+                                        });
+                                    }
+                                    break;
+
+                                case 'route_to_view':
+                                    // Map views to workspace modes
+                                    const workspaceModes = {
+                                        'canvas': 'teaching',
+                                        'editor': 'coding',
+                                        'assessment': 'assessment',
+                                        'dashboard': null // Exit to dashboard
+                                    };
+                                    
+                                    const mode = workspaceModes[data.view];
+                                    
+                                    if (mode) {
+                                        // Open workspace using transition engine
+                                        setTranscript(`Opening ${mode} workspace...`);
+                                        setOrbState('THINKING');
+                                        
+                                        if (window.workspaceTransitions) {
+                                            window.workspaceTransitions.openWorkspace(mode, {
+                                                message: `Opening ${mode} workspace...`
+                                            });
+                                        }
+                                    } else if (data.view === 'dashboard') {
+                                        // Navigate to dashboard
+                                        window.location.href = 'dashboard.html';
+                                    }
+                                    break;
+
+                                case 'telemetry_update':
+                                    if(data.alerts && data.alerts.length > 0) {
+                                        const alert = data.alerts[0];
+                                        if(alert.severity === 'high') {
+                                            setOrbState('ALERT');
+                                            setTranscript(`⚠️ ${alert.message}`);
+                                        }
+                                    }
+                                    break;
+
+                                case 'canvas_command':
+                                    setOrbState('THINKING');
+                                    // Handle direct canvas command if needed
+                                    break;
+                            }
+                        });
+
+                        // Handle Audio Response (Binary)
+                        window.wsClient.onBinaryMessage((buffer) => {
+                             const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                             ctx.decodeAudioData(buffer, (decoded) => {
+                                 const source = ctx.createBufferSource();
+                                 source.buffer = decoded;
+                                 source.connect(ctx.destination);
+                                 source.start(0);
+                                 setOrbState('HAPPY');
+                                 if(orbRef.current) orbRef.current.startSpeakingAnimation();
+                                 source.onended = () => {
+                                     setOrbState('NEUTRAL');
+                                     if(orbRef.current) orbRef.current.stopSpeakingAnimation();
+                                 };
+                             });
+                        });
+
+                    } catch (e) {
+                        console.error('Auth/Init Error:', e);
+                        // If API call fails, redirect to login
+                        window.location.href = '/login.html';
+                    }
+                };
+                initSession();
+                
+                return () => {
+                   if(window.wsClient) window.wsClient.disconnect();
+                };
+            }, []);
+
+            const toggleListening = async () => {
+                if (isListening) {
+                    stopListening();
+                } else {
+                    startListening();
+                }
+            };
+
+            const startListening = async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioStreamRef.current = stream;
+                    
+                    const recorder = new MediaRecorder(stream);
+                    mediaRecorderRef.current = recorder;
+                    chunksRef.current = [];
+
+                    recorder.ondataavailable = (e) => chunksRef.current.push(e.data);
+                    recorder.onstop = async () => {
+                        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+                        const buffer = await blob.arrayBuffer();
+                        window.wsClient.sendBinary(buffer);
+                        setOrbState('THINKING');
+                        setTranscript("Processing...");
+                    };
+
+                    recorder.start();
+                    setIsListening(true);
+                    setOrbState('ALERT'); // Used for listening state here
+                    setTranscript("Listening...");
+                } catch (e) {
+                    console.error("Mic error", e);
+                    setTranscript("Microphone access denied.");
+                }
+            };
+
+            const stopListening = () => {
+                if (mediaRecorderRef.current && isListening) {
+                    mediaRecorderRef.current.stop();
+                    audioStreamRef.current.getTracks().forEach(t => t.stop());
+                    setIsListening(false);
+                }
+            };
+
+            const sendText = (text) => {
+                if(!text.trim()) return;
+                window.wsClient.sendMessage({
+                    type: 'context_update',
+                    event_type: 'chat_message',
+                    message: text,
+                    context: { tool: 'text' }
+                });
+                setOrbState('THINKING');
+                setTranscript(`You: ${text}`);
+            };
+
+            return { transcript, isListening, isConnected, toggleListening, sendText };
+        };
+
+        // --- Main Component ---
+        const SupervisorApp = () => {
+            useMousePosition();
+            const orbRef = useRef(null); // Holds the OrbVisualizer instance
+            const neuralOrbRef = useRef(null); // Holds the NeuralOrbVisualizer instance
+            const [inputText, setInputText] = useState("");
+
+            useEffect(() => {
+                // Init Icons
+                lucide.createIcons();
+                
+                // Init Background Orb
+                if (!orbRef.current && window.OrbVisualizer) {
+                    orbRef.current = new window.OrbVisualizer('orb-canvas-container');
+                }
+                
+                // Init Neural Orb
+                if (!neuralOrbRef.current && window.NeuralOrbVisualizer) {
+                    neuralOrbRef.current = new window.NeuralOrbVisualizer('neural-orb-container');
+                }
+                
+                // Init Workspace Transition Engine
+                if (window.workspaceTransitions) {
+                    window.workspaceTransitions.init({
+                        supervisorPanel: document.getElementById('supervisor-panel'),
+                        workspaceContainer: document.getElementById('workspace-container'),
+                        orbContainer: orbRef.current,
+                        neuralOrb: neuralOrbRef.current,
+                        transcriptElement: document.querySelector('.transcript-text')
+                    });
+                    
+                    // Listen for mode changes
+                    window.workspaceTransitions.on('modeChange', (mode) => {
+                        setWorkspaceMode(mode);
+                        console.log('Mode changed to:', mode);
+                        
+                        // Load workspace module when mode changes
+                        if (mode !== 'supervisor' && window.workspaceManager) {
+                            window.workspaceManager.loadWorkspace(mode);
+                        }
+                    });
+                }
+                
+                // Init Workspace Manager
+                if (window.workspaceManager) {
+                    window.workspaceManager.init('workspace-content');
+                }
+            }, []);
+
+            const { transcript, isListening, isConnected, toggleListening, sendText } = useVoiceSupervisor(orbRef, neuralOrbRef);
+            const [workspaceMode, setWorkspaceMode] = useState('supervisor');
+
+            const handleSend = () => {
+                sendText(inputText);
+                setInputText("");
+            };
+
+            return (
+                <div className="ai-workspace-container">
+                    {/* Background Orb Canvas */}
+                    <div id="orb-canvas-container"></div>
+                    
+                    {/* Supervisor Panel (Left Column) — starts narrow so right panel is visible */}
+                    <div className="supervisor-panel workspace-mode" id="supervisor-panel">
+                        
+                        {/* Start Absolute Header Elements */}
+                        <div style={{
+                            position: 'absolute', 
+                            top: '2rem', 
+                            left: '2rem', 
+                            fontWeight: 700, 
+                            letterSpacing: '-1px', 
+                            fontSize: '1.2rem',
+                            zIndex: 50,
+                            pointerEvents: 'auto'
+                        }}>VAATHIYAR</div>
+
+                        <div className="status-badge" style={{
+                            position: 'absolute',
+                            top: workspaceMode !== 'supervisor' ? '4.5rem' : '2rem',
+                            left: workspaceMode !== 'supervisor' ? '2rem' : '50%',
+                            transform: workspaceMode !== 'supervisor' ? 'none' : 'translateX(-50%)',
+                            zIndex: 50,
+                            pointerEvents: 'auto',
+                            borderColor: isConnected ? 'var(--accent-primary)' : 'var(--accent-error)',
+                            color: isConnected ? 'var(--accent-primary)' : 'var(--accent-error)',
+                            transition: 'all 0.5s ease'
+                        }}>
+                            {isConnected ? 'SYSTEM ONLINE' : 'DISCONNECTED'}
+                        </div>
+
+                        <a href="dashboard.html" style={{
+                            position: 'absolute',
+                            top: '2rem',
+                            right: '2rem',
+                            color: '#fff', 
+                            textDecoration: 'none', 
+                            fontSize: '0.9rem', 
+                            opacity: 0.7,
+                            zIndex: 50,
+                            pointerEvents: 'auto'
+                        }}>EXIT SESSION</a>
+                        {/* End Absolute Header Elements */}
+
+                        <div className="supervisor-content">
+                            {/* Neural Orb Visualizer */}
+                            <div className="supervisor-orb-container">
+                                <div id="neural-orb-container"></div>
+                            </div>
+
+
+                        
+                        <main className="supervisor-transcript">
+                            <h2 className={`transcript-text ${transcript ? 'active' : ''}`}>
+                                {transcript}
+                            </h2>
+                        </main>
+
+                        
+                        <footer className="supervisor-chat-area">
+                            <div className="glass-input-container">
+                                <input 
+                                    type="text" 
+                                    className="chat-input" 
+                                    placeholder="Type your message..."
+                                    value={inputText}
+                                    onChange={(e) => setInputText(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                />
+                                <button className={`icon-btn ${isListening ? 'mic-active' : ''}`} onClick={toggleListening}>
+                                    <i data-lucide={isListening ? 'mic-off' : 'mic'}></i>
+                                </button>
+                                <button className="icon-btn" onClick={handleSend}>
+                                    <i data-lucide="send"></i>
+                                </button>
+                            </div>
+                        </footer>
+                        </div>
+                    </div>
+                    
+                    {/* Workspace Container (Right Column) — active from the start to show topic grid */}
+                    <div className="workspace-container active" id="workspace-container">
+                        {/* Header only shown when a topic workspace is open, not during topic grid */}
+                        <div className="workspace-header" id="workspace-header" style={{display:'none'}}>
+                            <div className="workspace-title">
+                                <span className={`workspace-mode-badge ${workspaceMode}`}>
+                                    {workspaceMode}
+                                </span>
+                            </div>
+                            <button 
+                                className="workspace-close-btn"
+                                onClick={() => {
+                                    if (window.workspaceTransitions) {
+                                        window.workspaceTransitions.closeWorkspace();
+                                    }
+                                }}
+                            >
+                                <i data-lucide="x"></i>
+                                Exit
+                            </button>
+                        </div>
+                        <div className="workspace-content" id="workspace-content">
+                            {/* State 1: Knowledge Modules (matches user mockup) */}
+                            <div id="topic-selector">
+                                <div className="km-heading">Knowledge Modules</div>
+                                <div className="topic-grid" id="topic-grid">
+                                    <div className="topic-card" data-topic="binary_search">
+                                        <div className="topic-icon-wrap">🔍</div>
+                                        <div className="topic-name">Binary Search</div>
+                                        <div className="topic-arrow">→</div>
+                                    </div>
+                                    <div className="topic-card" data-topic="avl_tree">
+                                        <div className="topic-icon-wrap">🌳</div>
+                                        <div className="topic-name">AVL Tree</div>
+                                        <div className="topic-arrow">→</div>
+                                    </div>
+                                    <div className="topic-card" data-topic="bubble_sort">
+                                        <div className="topic-icon-wrap">🫧</div>
+                                        <div className="topic-name">Bubble Sort</div>
+                                        <div className="topic-arrow">→</div>
+                                    </div>
+                                    <div className="topic-card" data-topic="bst">
+                                        <div className="topic-icon-wrap">🌲</div>
+                                        <div className="topic-name">Binary Search Tree</div>
+                                        <div className="topic-arrow">→</div>
+                                    </div>
+                                    <div className="topic-card" data-topic="stacks">
+                                        <div className="topic-icon-wrap">📚</div>
+                                        <div className="topic-name">Stacks</div>
+                                        <div className="topic-arrow">→</div>
+                                    </div>
+                                    <div className="topic-card" data-topic="queues">
+                                        <div className="topic-icon-wrap">🔁</div>
+                                        <div className="topic-name">Queues</div>
+                                        <div className="topic-arrow">→</div>
+                                    </div>
+                                    <div className="topic-card" data-topic="insertion_sort">
+                                        <div className="topic-icon-wrap">📌</div>
+                                        <div className="topic-name">Insertion Sort</div>
+                                        <div className="topic-arrow">→</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SupervisorApp />);
+        {% endverbatim %}
+    </script>
+
+    <!-- Topic Card Click Handling (vanilla JS, runs after React mounts) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Topic cards delegation — must wait for React to render the container
+        document.addEventListener('click', function(e) {
+            const card = e.target.closest('.topic-card');
+            if (!card) return;
+
+            const topicId = card.dataset.topic;
+            if (!topicId) return;
+
+            console.log('📖 Topic selected:', topicId);
+
+            // 1. Hide topic selector
+            const selector = document.getElementById('topic-selector');
+            if (selector) selector.style.display = 'none';
+
+            // 2. Show workspace header
+            const wsHeader = document.getElementById('workspace-header');
+            if (wsHeader) wsHeader.style.display = 'flex';
+
+            // 3. Update workspace header badge
+            const badge = document.querySelector('.workspace-mode-badge');
+            if (badge) {
+                badge.textContent = topicId.replace(/_/g, ' ');
+                badge.className = 'workspace-mode-badge teaching';
+            }
+
+            // 4. Create teaching workspace for this topic
+            const contentEl = document.getElementById('workspace-content');
+            if (contentEl && window.TeachingWorkspace) {
+                contentEl.innerHTML = '';
+                const wsDiv = document.createElement('div');
+                wsDiv.id = 'tw-host';
+                wsDiv.style.cssText = 'width:100%; height:100%;';
+                contentEl.appendChild(wsDiv);
+
+                window._currentTeachingWorkspace = new window.TeachingWorkspace('tw-host', topicId);
+                if (window.lucide) window.lucide.createIcons();
+            }
+
+            // 5. Notify AI of topic selection
+            if (window.wsClient && window.wsClient.isConnected) {
+                const topicNames = {
+                    binary_search: 'Binary Search', avl_tree: 'AVL Tree',
+                    bubble_sort: 'Bubble Sort', bst: 'Binary Search Tree',
+                    stacks: 'Stacks', queues: 'Queues', insertion_sort: 'Insertion Sort'
+                };
+                window.wsClient.sendMessage({
+                    type: 'context_update',
+                    event_type: 'chat_message',
+                    message: `I want to study ${topicNames[topicId] || topicId}. Please give me a hint about the problem to get me started.`,
+                    context: { topic: topicId, mode: 'socratic_tutor' }
+                });
+            }
+        });
+
+        // Close button: go back to topic selector
+        document.addEventListener('click', function(e) {
+            const closeBtn = e.target.closest('.workspace-close-btn');
+            if (!closeBtn) return;
+
+            // Show topic selector again
+            const selector = document.getElementById('topic-selector');
+            if (selector) selector.style.display = '';
+
+            // Hide workspace header
+            const wsHeader = document.getElementById('workspace-header');
+            if (wsHeader) wsHeader.style.display = 'none';
+
+            // Destroy active workspace
+            if (window._currentTeachingWorkspace) {
+                window._currentTeachingWorkspace.destroy();
+                window._currentTeachingWorkspace = null;
+            }
+
+            // Clear workspace content
+            const contentEl = document.getElementById('workspace-content');
+            if (contentEl) contentEl.innerHTML = '';
+        });
+    });
+    </script>
+</body>
+</html>
+

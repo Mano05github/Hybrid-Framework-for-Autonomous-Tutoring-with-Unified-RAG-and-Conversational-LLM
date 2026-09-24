@@ -1,0 +1,336 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaathiyar AI — The AI That Teaches Like a Master</title>
+    
+    <!-- Google Fonts for modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-bg: #141c27;
+            --text-light: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.85);
+            --cta-gradient: linear-gradient(135deg, #fceadd 0%, #d8b49e 100%);
+            --cta-glow: rgba(235, 199, 175, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* 
+         * Background Setup: Focuses on the right side of the image while 
+         * overlaying the left side to hide the original baked-in text.
+         */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            /* Update to real path during deployment, using relative here for static_frontend */
+            background-image: url('/static/images/landing_bg_4k.png');
+            background-size: cover;
+            background-position: center right;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Gradient mask to hide baked-in text and provide contrast for HTML text */
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 65%;
+            height: 100%;
+            background: linear-gradient(90deg, #1d2b3c 0%, rgba(29, 43, 60, 0.95) 30%, rgba(29, 43, 60, 0.8) 50%, transparent 100%);
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 4rem;
+            width: 100%;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .logo svg {
+            width: 24px;
+            height: 24px;
+            fill: #fceadd;
+        }
+
+        .header-center {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .login-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .login-link:hover {
+            color: #d8b49e;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .btn-header {
+            background: var(--cta-gradient);
+            color: #1a1a1a;
+            border: none;
+            box-shadow: 0 4px 15px var(--cta-glow), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--cta-glow), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+            filter: brightness(1.05);
+        }
+
+        /* MAIN CONTENT */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 4rem;
+            width: 100%;
+            max-width: 650px;
+            animation: fadeIn 1.2s ease-out forwards;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 3.5vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        p.subtitle {
+            font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+            line-height: 1.6;
+            color: var(--text-dim);
+            margin-bottom: 3rem;
+            max-width: 90%;
+            font-weight: 400;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 1.25rem;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: var(--cta-gradient);
+            color: #1a1a1a;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 25px var(--cta-glow), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(rgba(255,255,255,0.2), transparent, transparent);
+            transform: rotate(45deg);
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px var(--cta-glow), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+            filter: brightness(1.05);
+        }
+
+        .btn-primary:hover::after {
+            opacity: 1;
+            transform: rotate(45deg) translateY(20%);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 0.8rem 2rem;
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .hero-section::before {
+                width: 80%;
+                background: linear-gradient(90deg, #1d2b3c 0%, rgba(29, 43, 60, 0.95) 50%, rgba(29, 43, 60, 0.8) 70%, transparent 100%);
+            }
+            main {
+                max-width: 600px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                background-position: 70% center;
+            }
+            .hero-section::before {
+                width: 100%;
+                background: linear-gradient(90deg, rgba(29, 43, 60, 0.98) 0%, rgba(29, 43, 60, 0.92) 100%);
+            }
+            header {
+                padding: 1.5rem 2rem;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            .header-center {
+                display: none;
+            }
+            main {
+                padding: 0 2rem;
+            }
+            .cta-group {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-section">
+        <div class="content-wrapper">
+            
+            <header>
+                <a href="#" class="logo">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L9 9H2L7.5 13.5L5.5 21L12 17L18.5 21L16.5 13.5L22 9H15L12 2Z"/>
+                    </svg>
+                    Vaathiyar AI
+                </a>
+                
+                <div class="header-center">
+                    AI Learning Platform
+                </div>
+                
+                <div class="header-right">
+                    <a href="login.html" class="login-link">Login</a>
+                    <a href="register.html" class="btn btn-header">Start Learning</a>
+                </div>
+            </header>
+
+            <main>
+                <h1>Meet Vaathiyar —<br>The AI That Teaches<br>Like a Master</h1>
+                <p class="subtitle">Not just answers. Vaathiyar helps you think,<br>explore, and truly understand.</p>
+                
+                <div class="cta-group">
+                    <a href="register.html" class="btn btn-primary">Start Learning</a>
+                    <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
+                </div>
+            </main>
+
+        </div>
+    </div>
+
+</body>
+</html>

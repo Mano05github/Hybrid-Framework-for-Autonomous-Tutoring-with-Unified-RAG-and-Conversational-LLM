@@ -7,10 +7,10 @@ logger = logging.getLogger(__name__)
 
 class AIService:
     def __init__(self):
-        api_key = os.getenv("GOOGLE_API_KEY")
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            logger.error("GOOGLE_API_KEY not found in environment variables")
-            raise ValueError("GOOGLE_API_KEY not set")
+            logger.error("GEMINI_API_KEY not found in environment variables")
+            raise ValueError("GEMINI_API_KEY not set")
         
         # Initialize the new Client
         self.client = genai.Client(api_key=api_key)

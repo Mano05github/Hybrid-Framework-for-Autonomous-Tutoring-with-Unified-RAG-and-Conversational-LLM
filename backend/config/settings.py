@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
@@ -52,7 +52,9 @@ INSTALLED_APPS = [
     'users',
     'core',
     'ai_engine',
+    'ai_engine.pbl',     # Problem-Based Learning
     'learning_session',  # Gap implementations
+    'rag',               # RAG Knowledge System
 ]
 
 MIDDLEWARE = [
@@ -86,12 +88,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# Channel Layer (In-Memory for Dev, Redis for Prod)
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
+# Channel layer backend is environment-driven for reliability rollout.
+_channel_backend = os.getenv('CHANNEL_LAYER_BACKEND', 'memory').lower()
+if _channel_backend == 'redis':
+    _redis_url = os.getenv('CHANNEL_REDIS_URL', 'redis://127.0.0.1:6379/0')
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [_redis_url]},
+        }
     }
-}
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer'
+        }
+    }
 
 
 # Database
@@ -162,3 +174,21 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
+
+# Cache/LLM defaults (override in environment)
+CACHE_MODE = os.getenv("CACHE_MODE", "memory")  # auto | redis | memory | disabled
+LLM_TIMEOUT_SECONDS = int(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+
+# Migration and live-voice feature flags
+NEW_ARCH_ENABLED = os.getenv("NEW_ARCH_ENABLED", "0") == "1"
+NEW_ARCH_FORCE_MODE = os.getenv("NEW_ARCH_FORCE_MODE", "auto").lower()  # auto | legacy | new
+NEW_ARCH_CANARY_PERCENT = int(os.getenv("NEW_ARCH_CANARY_PERCENT", "100"))
+VOICE_STREAMING_STT = os.getenv("VOICE_STREAMING_STT", "0") == "1"
+VOICE_STREAMING_RESPONSES = os.getenv("VOICE_STREAMING_RESPONSES", "0") == "1"
+VOICE_BARGE_IN = os.getenv("VOICE_BARGE_IN", "1") == "1"
+
+# RAG gate controls for the new architecture path
+RAG_ENABLED = os.getenv("RAG_ENABLED", "1") == "1"
+RAG_MAX_CHARS = int(os.getenv("RAG_MAX_CHARS", "1200"))
+RAG_MAX_K = int(os.getenv("RAG_MAX_K", "5"))

@@ -1,98 +1,60 @@
 """
-Ollama warmup utilities to reduce first-request latency
+LLM health check — Qwen via OpenRouter
 """
-import requests
+import os
 import logging
-from threading import Thread
-import time
+import requests
 
 logger = logging.getLogger(__name__)
 
 
-def warmup_ollama(model_name="llama3.2", api_url="http://localhost:11434"):
+def check_qwen_health() -> bool:
     """
-    Warm up Ollama by sending a simple test request.
-    This loads the model into memory, reducing latency for subsequent requests.
-    
-    Args:
-        model_name: Name of the model to warm up
-        api_url: Ollama API endpoint
+    Verify OpenRouter is reachable and the API key is valid.
+    HTTP 429 (rate limit) still counts as healthy — the key works.
     """
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
+    if not api_key:
+        logger.error("❌ OPENROUTER_API_KEY not set")
+        return False
+
     try:
-        # Test health endpoint first
-        health_response = requests.get(f"{api_url}/api/tags", timeout=2)
-        
-        if health_response.status_code != 200:
-            logger.warning(f"Ollama health check failed: {health_response.status_code}")
-            return False
-        
-        logger.info(f"🔥 Warming up Ollama model: {model_name}")
-        
-        # Send a tiny warmup request
-        warmup_payload = {
-            "model": model_name,
-            "prompt": "Hi",
-            "stream": False,
-            "options": {
-                "num_predict": 5  # Just 5 tokens to make it fast
-            }
-        }
-        
         response = requests.post(
-            f"{api_url}/api/generate",
-            json=warmup_payload,
-            timeout=30
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": os.getenv("QWEN_MODEL", "qwen/qwen3-next-80b-a3b-instruct:free"),
+                "messages": [{"role": "user", "content": "Hi"}],
+                "max_tokens": 1,
+            },
+            timeout=10,
         )
-        
         if response.status_code == 200:
-            logger.info(f"✅ Ollama warmup successful for {model_name}")
+            logger.info("✅ Qwen (OpenRouter) is reachable and API key is valid")
+            return True
+        elif response.status_code == 429:
+            # Rate limited but key and endpoint are valid — treat as healthy
+            logger.info("✅ Qwen (OpenRouter) API key valid (rate-limited on probe, queries will work)")
             return True
         else:
-            logger.warning(f"⚠️ Ollama warmup returned {response.status_code}")
+            logger.warning(f"⚠️ OpenRouter returned HTTP {response.status_code}: {response.text[:100]}")
             return False
-            
-    except requests.exceptions.Timeout:
-        logger.warning(f"⚠️ Ollama warmup timed out (model may be loading)")
-        return False
-    except requests.exceptions.ConnectionError:
-        logger.error(f"❌ Cannot connect to Ollama at {api_url}")
-        return False
     except Exception as e:
-        logger.error(f"❌ Ollama warmup error: {e}")
+        logger.error(f"❌ Qwen health check failed: {e}")
         return False
 
 
-def warmup_ollama_async(model_name="llama3.2", api_url="http://localhost:11434"):
-    """
-    Asynchronously warm up Ollama in a background thread.
-    This doesn't block server startup.
-    """
-    def _warmup():
-        time.sleep(2)  # Wait 2 seconds for server to fully start
-        warmup_ollama(model_name, api_url)
-    
-    thread = Thread(target=_warmup, daemon=True)
-    thread.start()
-    logger.info("🔥 Started Ollama warmup in background")
+# Backwards-compat stubs (used in settings.py startup checks)
+def warmup_ollama(*args, **kwargs):
+    logger.info("ℹ️  warmup_ollama: Ollama removed. Using Qwen via OpenRouter.")
 
+def warmup_ollama_async(*args, **kwargs):
+    check_qwen_health()
 
-def check_ollama_health(api_url="http://localhost:11434"):
-    """
-    Check if Ollama is running and responsive.
-    
-    Returns:
-        tuple: (is_healthy: bool, available_models: list)
-    """
-    try:
-        response = requests.get(f"{api_url}/api/tags", timeout=2)
-        
-        if response.status_code == 200:
-            data = response.json()
-            models = [m.get("name") for m in data.get("models", [])]
-            return True, models
-        else:
-            return False, []
-            
-    except Exception as e:
-        logger.error(f"Ollama health check failed: {e}")
-        return False, []
+def check_ollama_health(*args, **kwargs):
+    ok = check_qwen_health()
+    models = ["qwen/qwen3-next-80b-a3b-instruct:free"] if ok else []
+    return ok, models

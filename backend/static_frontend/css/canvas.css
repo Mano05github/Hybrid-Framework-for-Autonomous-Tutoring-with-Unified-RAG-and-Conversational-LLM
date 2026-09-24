@@ -24,6 +24,12 @@
     border-bottom: 1px solid rgba(0, 212, 255, 0.2);
 }
 
+.canvas-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
 .canvas-title {
     font-family: var(--font-display);
     font-size: 1.5rem;
@@ -37,6 +43,38 @@
 .canvas-actions {
     display: flex;
     gap: var(--space-sm);
+}
+
+.teaching-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.teach-btn {
+    padding: 0.4rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.08);
+    color: var(--color-soft-white);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.teach-btn:hover {
+    background: rgba(0, 212, 255, 0.2);
+}
+
+.teach-status {
+    font-size: 0.75rem;
+    color: var(--color-muted-gray);
+    min-width: 140px;
 }
 
 .action-btn {
@@ -238,6 +276,23 @@
     overflow: hidden;
     background: white;
     border-radius: 0 0 20px 20px;
+}
+
+.phase-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 120;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(10, 10, 15, 0.8);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: var(--color-soft-white);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
 }
 
 #drawingCanvas {

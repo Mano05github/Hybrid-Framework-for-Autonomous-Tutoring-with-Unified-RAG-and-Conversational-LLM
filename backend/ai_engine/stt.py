@@ -1,137 +1,141 @@
+﻿"""
+Speech-to-Text engine using Deepgram only.
+
+Accepts WebM audio directly from browser MediaRecorder.
+Built-in noise rejection via confidence + post-processing filter.
 """
-Google Cloud Speech-to-Text Engine
-Handles audio transcription using Google Cloud STT API
-"""
+
 import os
+import re
+import logging
 from typing import Optional
-from google.cloud import speech
-from django.conf import settings
+
+import requests
+
+logger = logging.getLogger(__name__)
+
+# Noise words / filler patterns that should be discarded
+_NOISE_PATTERNS = re.compile(
+    r'^[\s\.,!?\-_\(\)\[\]]{0,5}$'
+    r'|^\[.*?\]$'
+    r'|^(uh+|um+|mm+|hmm+|ah+|oh+|hm+|er+)$',
+    re.IGNORECASE,
+)
 
 
 class STTEngine:
-    """Singleton Speech-to-Text Engine"""
-    
-    _instance = None
-    
+    """
+    Singleton Speech-to-Text engine using Deepgram only.
+    """
+
+    _instance    = None
+    _initialized = False
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         if self._initialized:
             return
-            
-        # Set credentials path
-        credentials_path = os.path.join(
-            settings.BASE_DIR, 
-            'config', 
-            'google-cloud-credentials.json'
-        )
-        
-        if os.path.exists(credentials_path):
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
-            self.client = speech.SpeechClient()
-            self._initialized = True
-            print(f"✓ Google Cloud STT initialized with credentials from {credentials_path}")
-        else:
-            raise FileNotFoundError(
-                f"Google Cloud credentials not found at {credentials_path}. "
-                "Please ensure google-cloud-credentials.json exists in backend/config/"
-            )
-    
+
+        self._deepgram_key = os.getenv('DEEPGRAM_API_KEY')
+        self._provider = 'deepgram'
+        self._model = 'nova-2'
+
+        if not self._deepgram_key:
+            raise ValueError('DEEPGRAM_API_KEY is required in backend/.env')
+
+        self._initialized = True
+        logger.info('STT initialized: provider=%s model=%s', self._provider, self._model)
+
+    # -- Public API (backward-compatible signature) ----------------------------
+
     def transcribe_audio(
-        self, 
-        audio_content: bytes, 
-        language_code: str = "en-US",
+        self,
+        audio_content: bytes,
+        language_code: Optional[str] = None,
         sample_rate: int = 16000,
-        encoding: speech.RecognitionConfig.AudioEncoding = speech.RecognitionConfig.AudioEncoding.LINEAR16
+        encoding=None,
     ) -> Optional[str]:
         """
-        Transcribe audio bytes to text using Google Cloud STT
-        
-        Args:
-            audio_content: Raw audio bytes
-            language_code: BCP-47 language code (default: en-US)
-            sample_rate: Audio sample rate in Hz (default: 16000)
-            encoding: Audio encoding format (default: LINEAR16/PCM)
-            
-        Returns:
-            Transcribed text or None if transcription failed
+        Transcribe audio bytes to text.
+        Returns cleaned transcript string, or None for non-speech audio.
         """
-        try:
-            audio = speech.RecognitionAudio(content=audio_content)
-            
-            config = speech.RecognitionConfig(
-                encoding=encoding,
-                sample_rate_hertz=sample_rate,
-                language_code=language_code,
-                enable_automatic_punctuation=True,
-                model="default",  # Can be changed to 'phone_call', 'video', 'command_and_search'
-            )
-            
-            # Synchronous recognition for short audio (<1 minute)
-            response = self.client.recognize(config=config, audio=audio)
-            
-            # Combine all transcripts
-            transcripts = []
-            for result in response.results:
-                if result.alternatives:
-                    transcripts.append(result.alternatives[0].transcript)
-            
-            return " ".join(transcripts) if transcripts else None
-            
-        except Exception as e:
-            print(f"❌ STT Error: {str(e)}")
+        if not audio_content or len(audio_content) < 512:
             return None
-    
-    def transcribe_streaming(self, audio_generator, language_code: str = "en-US"):
-        """
-        Streaming transcription for real-time audio
-        
-        Args:
-            audio_generator: Generator yielding audio chunks
-            language_code: BCP-47 language code
-            
-        Yields:
-            Transcribed text chunks
-        """
+
         try:
-            config = speech.RecognitionConfig(
-                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                sample_rate_hertz=16000,
-                language_code=language_code,
-                enable_automatic_punctuation=True,
+            raw = self._transcribe_with_deepgram(audio_content)
+            return self._clean(raw)
+
+        except Exception as exc:
+            logger.error('STT transcription error: %s', exc, exc_info=True)
+            return None
+
+    # -- Streaming shim --------------------------------------------------------
+
+    def transcribe_streaming(self, audio_generator, language_code: str = 'en-US'):
+        """Yields single transcript chunk for backward-compat."""
+        try:
+            chunks = list(audio_generator)
+            if chunks:
+                result = self.transcribe_audio(b''.join(chunks))
+                if result:
+                    yield result
+        except Exception as exc:
+            logger.error('STT streaming error: %s', exc, exc_info=True)
+
+    # -- Internal helpers ------------------------------------------------------
+
+    def _clean(self, text: str) -> Optional[str]:
+        """Strip noise tokens; return None if nothing useful remains."""
+        if not text:
+            return None
+        if _NOISE_PATTERNS.search(text):
+            return None
+        if len(re.findall(r'\w', text)) < 2:
+            return None
+        return text
+
+    def _transcribe_with_deepgram(self, audio_content: bytes) -> Optional[str]:
+        params = {
+            'model': 'nova-2',
+            'smart_format': 'true',
+            'punctuate': 'true',
+            'detect_language': 'true',
+            'filler_words': 'false',
+            'numerals': 'true',
+        }
+        response = requests.post(
+            'https://api.deepgram.com/v1/listen',
+            params=params,
+            headers={
+                'Authorization': f'Token {self._deepgram_key}',
+                'Content-Type': 'audio/webm',
+            },
+            data=audio_content,
+            timeout=30,
+        )
+        if not response.ok:
+            # Deepgram sends useful validation hints in the response body.
+            logger.error(
+                'Deepgram STT request failed: status=%s url=%s body=%s',
+                response.status_code,
+                response.url,
+                response.text,
             )
-            
-            streaming_config = speech.StreamingRecognitionConfig(
-                config=config,
-                interim_results=True  # Get partial results
-            )
-            
-            # Generator that yields audio requests
-            def request_generator():
-                yield speech.StreamingRecognizeRequest(audio_content=None)
-                for chunk in audio_generator:
-                    yield speech.StreamingRecognizeRequest(audio_content=chunk)
-            
-            responses = self.client.streaming_recognize(
-                config=streaming_config,
-                requests=request_generator()
-            )
-            
-            for response in responses:
-                for result in response.results:
-                    if result.alternatives:
-                        yield result.alternatives[0].transcript
-                        
-        except Exception as e:
-            print(f"❌ Streaming STT Error: {str(e)}")
-            yield None
+        response.raise_for_status()
+        payload = response.json()
+        alt = (((payload.get('results') or {}).get('channels') or [{}])[0].get('alternatives') or [{}])[0]
+        transcript = (alt.get('transcript') or '').strip()
+        confidence = alt.get('confidence') or 0.0
+        if confidence < 0.45:
+            return None
+        return transcript or None
 
 
-# Singleton instance getter
 def get_stt_engine() -> STTEngine:
-    """Get or create the STT engine singleton"""
+    """Get or create the singleton STT engine."""
     return STTEngine()

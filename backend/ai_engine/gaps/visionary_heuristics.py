@@ -28,10 +28,10 @@ class ImmediateHeuristicEngine:
     Detects: idle spikes, error cascades, velocity drops, streak breaks.
     """
     
-    # Thresholds (conservative to avoid alert fatigue)
-    IDLE_THRESHOLD_LOW = 60.0      # 1 minute idle
-    IDLE_THRESHOLD_MODERATE = 120.0  # 2 minutes idle
-    IDLE_THRESHOLD_HIGH = 300.0     # 5 minutes idle
+    # Thresholds — raised to avoid false alerts during normal reading/thinking
+    IDLE_THRESHOLD_LOW = 180.0       # 3 minutes idle  (was 1 min)
+    IDLE_THRESHOLD_MODERATE = 480.0  # 8 minutes idle  (was 2 min)
+    IDLE_THRESHOLD_HIGH = 900.0      # 15 minutes idle (was 5 min)
     
     ERROR_CASCADE_WINDOW = 30.0     # 30 seconds
     ERROR_CASCADE_COUNT = 3         # 3+ errors in window

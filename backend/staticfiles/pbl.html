@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Problem-Based Learning | Vaathiyar AI</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Tldraw (UMD build) -->
+  <script src="https://unpkg.com/@tldraw/tldraw@2.4.4/dist-cjs/tldraw.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@tldraw/tldraw@2.4.4/dist-cjs/tldraw.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/static/css/pbl.css?v=20260314b" />
+
+  <!-- Auth & API -->
+  <script src="/static/js/api-client.js"></script>
+  <script src="/static/js/auth-guard.js"></script>
+  <script>
+    (async () => {
+      const ok = await AuthGuard.checkAuth();
+      if (!ok) window.location.href = 'login.html';
+    })();
+  </script>
+</head>
+<body>
+  <div class="noise-overlay"></div>
+
+  <!-- ══════════════════════════════════════════════
+       LOADING OVERLAY
+  ══════════════════════════════════════════════ -->
+  <div id="pbl-loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text">Generating problem...</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       MAIN LAYOUT
+  ══════════════════════════════════════════════ -->
+  <div id="pbl-layout">
+
+    <!-- ── TOP TOOLBAR ─────────────────────────────── -->
+    <div id="pbl-toolbar">
+      <a href="learn.html" class="back-btn" id="back-btn">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;"></i>
+        Back
+      </a>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-brand">
+        <span class="toolbar-brand-icon">🤖</span>
+        <span>PBL Mode</span>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <!-- Drawing tools -->
+      <button class="toolbar-btn active" id="tool-draw" title="Pen (P)">
+        <i data-lucide="pen-line" style="width:15px;height:15px;"></i>
+        Draw
+      </button>
+      <button class="toolbar-btn" id="tool-eraser" title="Eraser (E)">
+        <i data-lucide="eraser" style="width:15px;height:15px;"></i>
+        Eraser
+      </button>
+      <button class="toolbar-btn" id="tool-text" title="Text (T)">
+        <i data-lucide="type" style="width:15px;height:15px;"></i>
+        Text
+      </button>
+      <button class="toolbar-btn" id="tool-arrow" title="Arrow">
+        <i data-lucide="move-right" style="width:15px;height:15px;"></i>
+        Arrow
+      </button>
+      <button class="toolbar-btn" id="tool-select" title="Select (V)">
+        <i data-lucide="mouse-pointer-2" style="width:15px;height:15px;"></i>
+        Select
+      </button>
+
+      <div class="toolbar-divider"></div>
+
+      <!-- Code block -->
+      <button class="toolbar-btn primary" id="add-code-block-btn">
+        <i data-lucide="code-2" style="width:15px;height:15px;"></i>
+        + Add Code Block
+      </button>
+
+      <label class="toolbar-color" title="Pen color">
+        <i data-lucide="palette" style="width:14px;height:14px;"></i>
+        <input type="color" id="pen-color-picker" value="#63b3ed" />
+      </label>
+
+      <div class="toolbar-right">
+        <button class="toolbar-btn" id="undo-btn" title="Undo (Ctrl+Z)">
+          <i data-lucide="undo-2" style="width:15px;height:15px;"></i>
+        </button>
+        <button class="toolbar-btn" id="redo-btn" title="Redo (Ctrl+Y)">
+          <i data-lucide="redo-2" style="width:15px;height:15px;"></i>
+        </button>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn" id="clear-canvas-btn" title="Clear canvas">
+          <i data-lucide="trash-2" style="width:15px;height:15px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CANVAS AREA ──────────────────────────────── -->
+    <div id="canvas-area">
+      <!-- Tldraw mounts here -->
+      <div id="tldraw-mount"></div>
+
+      <!-- Problem title pinned card (AI-placed, read-only) -->
+      <div id="problem-canvas-card" class="hidden">
+        <div class="pcc-label">Current Problem</div>
+        <div class="pcc-title" id="pcc-title">Loading...</div>
+      </div>
+
+      <!-- AI highlight overlays injected here programmatically -->
+      <div id="highlight-container"></div>
+    </div>
+
+    <!-- ── RIGHT PANEL ──────────────────────────────── -->
+    <div id="right-panel">
+
+      <!-- Tab Bar -->
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-tab="problem" id="tab-btn-problem">
+          <i data-lucide="target" style="width:13px;height:13px;"></i>
+          Problem
+        </button>
+        <button class="panel-tab" data-tab="ai" id="tab-btn-ai">
+          <i data-lucide="bot" style="width:13px;height:13px;"></i>
+          AI Tutor
+          <span class="tab-dot" id="ai-tab-dot"></span>
+        </button>
+        <button class="panel-tab" data-tab="voice" id="tab-btn-voice">
+          <i data-lucide="mic" style="width:13px;height:13px;"></i>
+          Voice
+        </button>
+      </div>
+
+      <!-- ── Problem Tab ──────────────────────────── -->
+      <div class="tab-content active" id="tab-problem">
+
+        <!-- Concept + difficulty -->
+        <div class="problem-header">
+          <span class="concept-badge" id="concept-badge">
+            <i data-lucide="sparkles" style="width:11px;height:11px;"></i>
+            <span id="concept-name">Loading...</span>
+          </span>
+          <div class="difficulty-stars" id="difficulty-stars">
+            <span class="star" data-tier="1">★</span>
+            <span class="star" data-tier="2">★</span>
+            <span class="star" data-tier="3">★</span>
+            <span class="star" data-tier="4">★</span>
+            <span class="star" data-tier="5">★</span>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="problem-title" id="problem-title">Waiting for problem...</div>
+
+        <!-- Statement -->
+        <div class="problem-statement" id="problem-statement">
+          Your problem will appear here. Connecting to AI tutor...
+        </div>
+
+        <!-- Meta: attempts + hints -->
+        <div class="problem-meta">
+          <div class="meta-pill">
+            <span class="meta-val" id="attempt-count">1</span>
+            <span class="meta-lbl">Attempts</span>
+          </div>
+          <div class="meta-pill">
+            <span class="meta-val" id="hint-count">0</span>
+            <span class="meta-lbl">Hints used</span>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="problem-actions">
+          <button class="action-btn run" id="run-code-btn" disabled>
+            <i data-lucide="play" style="width:14px;height:14px;"></i>
+            Run Code
+          </button>
+          <button class="action-btn submit" id="submit-btn" disabled>
+            <i data-lucide="check-circle" style="width:14px;height:14px;"></i>
+            Submit Solution
+          </button>
+          <button class="action-btn hint" id="hint-btn" disabled>
+            <i data-lucide="lightbulb" style="width:14px;height:14px;"></i>
+            Get Hint
+          </button>
+        </div>
+
+        <!-- Code execution result -->
+        <div class="code-result-box" id="code-result-box"></div>
+
+      </div>
+
+      <!-- ── AI Tutor Tab ─────────────────────────── -->
+      <div class="tab-content" id="tab-ai">
+        <div class="ai-messages" id="ai-messages">
+          <!-- Initial welcome -->
+          <div class="msg-bubble ai">
+            <div class="msg-agent">AI Tutor</div>
+            Hello! I'm watching your canvas. Solve the problem in your own way — draw, write notes, or code. I'll guide you through voice when you need help. 🎓
+          </div>
+        </div>
+
+        <!-- Typing indicator -->
+        <div class="typing-indicator" id="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+
+        <!-- Input row -->
+        <div class="ai-input-row">
+          <textarea
+            class="ai-text-input"
+            id="ai-text-input"
+            placeholder="Type a question..."
+            rows="1"
+          ></textarea>
+          <button class="ai-send-btn" id="ai-send-btn">
+            <i data-lucide="send" style="width:16px;height:16px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Voice Tab ────────────────────────────── -->
+      <div class="tab-content" id="tab-voice">
+
+        <div class="voice-status idle" id="voice-status">
+          <div class="status-dot"></div>
+          <span id="voice-status-text">Ready</span>
+        </div>
+
+        <!-- Waveform visualizer -->
+        <canvas id="voice-waveform" width="300" height="80"></canvas>
+
+        <!-- Hold-to-speak -->
+        <button class="speak-btn" id="speak-btn">
+          <div class="speak-ring"></div>
+          🎤
+        </button>
+        <div class="speak-label">Start voice session</div>
+
+        <!-- Analyze canvas button -->
+        <button class="analyze-btn" id="analyze-canvas-btn">
+          <i data-lucide="scan-eye" style="width:15px;height:15px;"></i>
+          Analyze my canvas
+        </button>
+      </div>
+
+    </div><!-- /#right-panel -->
+
+  </div><!-- /#pbl-layout -->
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- ══════════════════════════════════════════════
+       PBL JavaScript Modules (order matters)
+  ══════════════════════════════════════════════ -->
+  <script src="/static/js/pbl-ws.js?v=20260314b"></script>
+  <script src="/static/js/pbl-canvas.js?v=20260314b"></script>
+  <script src="/static/js/pbl-event-tracker.js?v=20260314b"></script>
+  <script src="/static/js/pbl-session.js?v=20260314b"></script>
+
+  <!-- Init Lucide icons after DOM ready -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

@@ -96,3 +96,19 @@ target/
 
 # Old frontend folder (deprecated)
 /frontend/
+.venv/
+
+
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+
+# RAG generated storage
+/backend/rag_system/storage/
+
+# Large documents
+/backend/rag/docs/DSA in python complete theory hand writing notes.pdf

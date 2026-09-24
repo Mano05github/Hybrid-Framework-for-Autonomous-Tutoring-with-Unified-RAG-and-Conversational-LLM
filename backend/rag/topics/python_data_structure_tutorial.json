@@ -1,0 +1,247 @@
+[
+  {
+    "name": "Introduction",
+    "subtopics": [
+      "Data Structures Overview",
+      "General Data Structures",
+      "Python Specific Data Structures"
+    ]
+  },
+  {
+    "name": "Environment",
+    "subtopics": [
+      "Local Environment Setup",
+      "Getting Python",
+      "Installing Python",
+      "Setting up PATH",
+      "Python Environment Variables",
+      "Running Python"
+    ]
+  },
+  {
+    "name": "Arrays",
+    "subtopics": [
+      "Array Representation",
+      "Basic Operations",
+      "Accessing Array Element",
+      "Insertion Operation",
+      "Deletion Operation",
+      "Search Operation",
+      "Update Operation"
+    ]
+  },
+  {
+    "name": "Lists",
+    "subtopics": [
+      "Accessing Values",
+      "Updating Lists",
+      "Delete List Elements",
+      "Basic List Operations"
+    ]
+  },
+  {
+    "name": "Tuples",
+    "subtopics": [
+      "Accessing Values in Tuples",
+      "Updating Tuples",
+      "Delete Tuple Elements",
+      "Basic Tuples Operations"
+    ]
+  },
+  {
+    "name": "Dictionary",
+    "subtopics": [
+      "Accessing Values in Dictionary",
+      "Updating Dictionary",
+      "Delete Dictionary Elements",
+      "Properties of Dictionary Keys"
+    ]
+  },
+  {
+    "name": "2D Array",
+    "subtopics": [
+      "Accessing Values",
+      "Inserting Values",
+      "Updating Values",
+      "Deleting the Values"
+    ]
+  },
+  {
+    "name": "Matrix",
+    "subtopics": [
+      "Accessing Values",
+      "Adding a row",
+      "Adding a column",
+      "Delete a row",
+      "Delete a column",
+      "Update a row"
+    ]
+  },
+  {
+    "name": "Sets",
+    "subtopics": [
+      "Set Operations",
+      "Accessing Values in a Set",
+      "Adding Items to a Set",
+      "Removing Item from a Set",
+      "Union of Sets",
+      "Intersection of Sets",
+      "Difference of Sets",
+      "Compare Sets"
+    ]
+  },
+  {
+    "name": "Maps",
+    "subtopics": [
+      "Creating a ChainMap",
+      "Map Reordering",
+      "Updating Map"
+    ]
+  },
+  {
+    "name": "Linked Lists",
+    "subtopics": [
+      "Creation of Linked list",
+      "Traversing a Linked List",
+      "Insertion in a Linked List",
+      "Removing an Item"
+    ]
+  },
+  {
+    "name": "Stack",
+    "subtopics": [
+      "PUSH into a Stack",
+      "POP from a Stack"
+    ]
+  },
+  {
+    "name": "Queue",
+    "subtopics": [
+      "Adding Elements",
+      "Removing Element"
+    ]
+  },
+  {
+    "name": "Dequeue",
+    "subtopics": []
+  },
+  {
+    "name": "Advanced Linked List",
+    "subtopics": [
+      "Creating Doubly linked list",
+      "Inserting into Doubly Linked List",
+      "Appending to a Doubly linked list"
+    ]
+  },
+  {
+    "name": "Hash Table",
+    "subtopics": [
+      "Accessing Values in Dictionary",
+      "Updating Dictionary",
+      "Delete Dictionary Elements"
+    ]
+  },
+  {
+    "name": "Binary Tree",
+    "subtopics": [
+      "Create Root",
+      "Inserting into a Tree",
+      "Traversing a Tree",
+      "Tree Traversal Algorithms"
+    ]
+  },
+  {
+    "name": "Search Tree",
+    "subtopics": [
+      "Search for a value in a B-tree"
+    ]
+  },
+  {
+    "name": "Heaps",
+    "subtopics": [
+      "Creating a Heap",
+      "Inserting into heap",
+      "Removing from heap",
+      "Replacing in a Heap"
+    ]
+  },
+  {
+    "name": "Graphs",
+    "subtopics": [
+      "Display graph vertices",
+      "Display graph edges",
+      "Adding a vertex",
+      "Adding an edge"
+    ]
+  },
+  {
+    "name": "Algorithm Design",
+    "subtopics": [
+      "Characteristics of an Algorithm",
+      "How to Write an Algorithm?"
+    ]
+  },
+  {
+    "name": "Divide and Conquer",
+    "subtopics": [
+      "Binary Search implementation"
+    ]
+  },
+  {
+    "name": "Recursion",
+    "subtopics": [
+      "Binary Search using Recursion"
+    ]
+  },
+  {
+    "name": "Backtracking",
+    "subtopics": []
+  },
+  {
+    "name": "Sorting Algorithms",
+    "subtopics": [
+      "Bubble Sort",
+      "Merge Sort",
+      "Insertion Sort",
+      "Shell Sort",
+      "Selection Sort"
+    ]
+  },
+  {
+    "name": "Searching Algorithms",
+    "subtopics": [
+      "Linear Search",
+      "Interpolation Search"
+    ]
+  },
+  {
+    "name": "Graph Algorithms",
+    "subtopics": [
+      "Depth First Traversal",
+      "Breadth First Traversal"
+    ]
+  },
+  {
+    "name": "Algorithm Analysis",
+    "subtopics": [
+      "Algorithm Complexity",
+      "Space Complexity",
+      "Time Complexity"
+    ]
+  },
+  {
+    "name": "Algorithm Types",
+    "subtopics": [
+      "Asymptotic Notations",
+      "Common Asymptotic Notations"
+    ]
+  },
+  {
+    "name": "Algorithm Classes",
+    "subtopics": [
+      "Greedy Algorithms",
+      "Divide and Conquer",
+      "Dynamic Programming"
+    ]
+  }
+]

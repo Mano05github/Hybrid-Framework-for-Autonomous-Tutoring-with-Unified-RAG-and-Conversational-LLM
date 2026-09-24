@@ -16,6 +16,7 @@ class WebSocketClient {
         // Callbacks
         this.onMessageCallback = null;
         this.onAudioCallback = null;
+        this.onBinaryMessageCallback = null;
         this.onConnectCallback = null;
         this.onDisconnectCallback = null;
         this.onErrorCallback = null;
@@ -100,9 +101,15 @@ class WebSocketClient {
     handleMessage(event) {
         // Check if message is binary (audio data)
         if (event.data instanceof Blob) {
-            if (this.onAudioCallback) {
-                this.onAudioCallback(event.data);
-            }
+            // Convert Blob to ArrayBuffer for audio playback
+            event.data.arrayBuffer().then(arrayBuffer => {
+                if (this.onAudioCallback) {
+                    this.onAudioCallback(arrayBuffer);
+                }
+                if (this.onBinaryMessageCallback) {
+                    this.onBinaryMessageCallback(arrayBuffer);
+                }
+            });
         } else {
             // Text message (JSON)
             try {
@@ -177,7 +184,7 @@ class WebSocketClient {
     /**
      * Send audio buffer (ArrayBuffer or Uint8Array)
      */
-    sendAudioBuffer(audioBuffer) {
+    sendBinary(audioBuffer) {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             console.error('WebSocket is not connected');
             return false;
@@ -250,7 +257,14 @@ class WebSocketClient {
         this.onAudioCallback = callback;
     }
 
+    /**binary messages (including audio)
+     */
+    onBinaryMessage(callback) {
+        this.onBinaryMessageCallback = callback;
+    }
+
     /**
+     * Set callback for 
      * Set callback for connection established
      */
     onConnect(callback) {

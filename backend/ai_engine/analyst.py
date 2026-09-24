@@ -1,101 +1,123 @@
+"""
+AnalystAgent — SIP Mastery Updater (v2 spec)
+
+Responsibilities:
+  1. Load the student's StudentIntelligenceProfile (SIP) from DB.
+  2. Update mastery scores via Elo algorithm (with forgetting curve decay).
+  3. Update confidence_index, streak, and consecutive_wrong counter.
+  4. Recalculate revision_priority_queue from all topics.
+  5. Persist changes back to DB.
+
+This agent is called as a post-session hook — NOT through the live LangGraph
+graph (which handles real-time turns). The graph's SessionOrchestrator calls
+analyst_agent() after a mini-test completes.
+"""
 import logging
+from typing import Optional, List
+
 from .state import AgentState
-from langchain_core.messages import AIMessage
 
 logger = logging.getLogger(__name__)
 
-import json
-import os
-import time
-from datetime import datetime
+
+def analyst_agent(state: AgentState) -> AgentState:
+    """
+    Post-session mastery update agent.
+
+    Reads from state:
+      - user_id           (str)
+      - current_topic     (str — topic title or pk str)
+      - quiz_data         (list of answered question dicts, each with 'correct' bool and 'points')
+      - consecutive_wrong_answers (optional, kept in state for in-session use)
+
+    Writes to state:
+      - mastery_state     (topic → normalised 0–100 score)
+    """
+    from django.core.exceptions import ObjectDoesNotExist
+
+    user_id    = state.get("user_id", "")
+    topic_str  = state.get("current_topic", "")
+    quiz_data  = state.get("quiz_data") or []
+
+    if not user_id:
+        logger.warning("[Analyst] No user_id in state — skipping mastery update")
+        return state
+
+    try:
+        from core.models import StudentIntelligenceProfile, Topic
+
+        # ── Load or create SIP ────────────────────────────────────────────────
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.get(pk=int(user_id))
+        sip, _created = StudentIntelligenceProfile.objects.get_or_create(user=user)
+
+        # ── Resolve topic ID ──────────────────────────────────────────────────
+        topic_id: Optional[int] = None
+        try:
+            topic_id = int(topic_str)
+        except (ValueError, TypeError):
+            # topic_str is a title — try to look it up
+            topic_obj = Topic.objects.filter(title__iexact=topic_str).first()
+            if topic_obj:
+                topic_id = topic_obj.pk
+
+        # ── Process quiz answers ───────────────────────────────────────────────
+        total_points_earned = 0
+        total_points_possible = 0
+
+        for q in quiz_data:
+            correct = bool(q.get("correct", False))
+            points  = int(q.get("points", 0))
+            total_points_possible += points
+            if correct:
+                total_points_earned += points
+            if topic_id is not None:
+                sip.update_mastery(topic_id=topic_id, correct=correct)
+
+        # ── Update confidence_index ────────────────────────────────────────────
+        if total_points_possible > 0:
+            raw_pct = (total_points_earned / total_points_possible) * 100
+            # EMA-style smoothing (70% existing + 30% new result)
+            sip.confidence_index = sip.confidence_index * 0.7 + raw_pct * 0.3
+            sip.confidence_index = max(0.0, min(100.0, sip.confidence_index))
+
+        # ── Update daily streak ────────────────────────────────────────────────
+        sip.update_streaks()
+
+        # ── Recalculate revision priority queue ────────────────────────────────
+        all_topic_ids = list(Topic.objects.values_list('pk', flat=True))
+        sip.recalculate_revision_queue(all_topic_ids)
+
+        # ── Persist ───────────────────────────────────────────────────────────
+        sip.save()
+
+        logger.info(
+            f"[Analyst] SIP updated for user={user_id} | topic={topic_id} | "
+            f"confidence={sip.confidence_index:.1f} | streak={sip.daily_streak}"
+        )
+
+        # ── Return mastery snapshot in state ──────────────────────────────────
+        mastery_snapshot = {
+            str(tid): sip.get_mastery_score(tid)
+            for tid in sip.mastery_map
+        }
+        state["mastery_state"] = mastery_snapshot
+        state["consecutive_wrong_answers"] = sip.consecutive_wrong_answers
+
+    except Exception as e:
+        logger.error(f"[Analyst] Error updating SIP: {e}", exc_info=True)
+
+    return state
+
 
 class AnalystAgent:
     """
-    The Analyst Agent ("The Auditor").
-    Tracks user mastery using Elo Rating algorithm.
-    Features:
-    1. Persistence: Saves to 'mastery_db.json'.
-    2. Forgetting Curve: Decay by 1% every 24h.
+    Class wrapper kept for backward compatibility.
+    Delegates to the module-level analyst_agent() function.
     """
-    def __init__(self):
-        self.db_path = os.path.join(os.path.dirname(__file__), 'mastery_db.json')
-        self.k_factor = 30
-        self.mastery_db = self._load_db()
-
-    def _load_db(self):
-        try:
-            if os.path.exists(self.db_path):
-                with open(self.db_path, 'r') as f:
-                    return json.load(f)
-        except Exception as e:
-            logger.error(f"Analyst: Load Failed {e}")
-        return {}
-
-    def _save_db(self):
-        try:
-            with open(self.db_path, 'w') as f:
-                json.dump(self.mastery_db, f, indent=2)
-        except Exception as e:
-            logger.error(f"Analyst: Save Failed {e}")
-
-    def _apply_decay(self, topic):
-        """Applies Forgetting Curve: 1% decay per 24h."""
-        if topic not in self.mastery_db:
-            return
-
-        data = self.mastery_db[topic]
-        last_ts = data.get('last_updated', time.time())
-        current_ts = time.time()
-        
-        hours_passed = (current_ts - last_ts) / 3600
-        days_passed = hours_passed / 24
-        
-        if days_passed > 1:
-            old_score = data['score']
-            decay_factor = 0.99 ** int(days_passed) # 1% drop per day
-            new_score = old_score * decay_factor
-            
-            self.mastery_db[topic]['score'] = round(new_score, 2)
-            self.mastery_db[topic]['last_updated'] = current_ts # Reset timer
-            logger.info(f"Analyst: Decay applied to {topic}. {old_score} -> {new_score}")
 
     def invoke(self, state: AgentState) -> dict:
-        messages = state['messages']
-        if not messages:
-            return {}
+        updated = analyst_agent(state)
+        return {"user_mastery": updated.get("mastery_state", {})}
 
-        topic = state.get('current_topic', 'general')
-        
-        # Initialize if new
-        if topic not in self.mastery_db:
-            self.mastery_db[topic] = {'score': 1000, 'last_updated': time.time()}
-
-        # 1. Apply Decay First (Memory Validation)
-        self._apply_decay(topic)
-        
-        current_elo = self.mastery_db[topic]['score']
-        
-        # 2. Elo Update Logic
-        quiz_result = state.get('quiz_result') 
-        
-        if quiz_result:
-            actual_score = 1 if quiz_result == 'correct' else 0
-            expected_score = 1 / (1 + 10 ** ((1500 - current_elo) / 400))
-            
-            new_elo = current_elo + self.k_factor * (actual_score - expected_score)
-            
-            self.mastery_db[topic]['score'] = round(new_elo, 2)
-            self.mastery_db[topic]['last_updated'] = time.time()
-            self._save_db() # Persist immediately
-            
-            logger.info(f"Analyst: Elo Updated for {topic}. {current_elo} -> {new_elo}")
-            
-            if new_elo < 800:
-                logger.warning(f"Analyst: Mastery low on {topic}.")
-
-        # Return simplified dict for other agents
-        simple_view = {k: v['score'] for k, v in self.mastery_db.items()}
-        return {"user_mastery": simple_view}
-
-        # The Analyst usually returns nothing to the chat, just updates state/DB.
-        return {"user_mastery": self.mastery_db}

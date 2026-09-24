@@ -7,14 +7,20 @@ psycopg2-binary
 pgvector
 openai
 google-generativeai
-google-cloud-texttospeech>=2.14.0   # Google Cloud TTS
-google-cloud-speech>=2.20.0         # Google Cloud STT
+google-genai
+elevenlabs>=1.0.0                   # ElevenLabs TTS
 langchain
 langchain-community
 python-dotenv
+requests
 django-cors-headers
 SpeechRecognition
 pydub
+fastapi
+uvicorn
+soundfile
+neuttsair
+transformers==4.35.2
 
 # Code Sandbox (Gap 3)
 RestrictedPython>=6.0

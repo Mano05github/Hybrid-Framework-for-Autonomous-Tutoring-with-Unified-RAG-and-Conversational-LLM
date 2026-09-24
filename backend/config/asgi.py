@@ -16,24 +16,19 @@ django.setup()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
-import learning_session.routing 
+import learning_session.routing
+import ai_engine.pbl.routing as pbl_routing
 
-# Warm up Ollama in background
-from llm_engine.warmup import warmup_ollama_async, check_ollama_health
+# Gemini LLM is used by default; initialization is lazy.
 
-# Check Ollama health and start warmup
-is_healthy, models = check_ollama_health()
-if is_healthy:
-    print(f"✅ Ollama is running with models: {models}")
-    warmup_ollama_async()
-else:
-    print("⚠️ Ollama is not running. Start it with 'ollama serve'")
+_all_ws_patterns = (
+    learning_session.routing.websocket_urlpatterns
+    + pbl_routing.websocket_urlpatterns
+)
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
-        URLRouter(
-            learning_session.routing.websocket_urlpatterns
-        )
+        URLRouter(_all_ws_patterns)
     ),
 })

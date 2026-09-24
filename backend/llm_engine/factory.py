@@ -1,23 +1,43 @@
+"""
+LLM Factory — routes to the active provider.
+Currently supports:
+  - gemini (Google's Gemini 2.5 API, recommended)
+  - ollama (Local models)
+  - qwen   (OpenRouter)
+"""
 import os
 import logging
-from .domain_gemini.gemini_provider import GoogleGeminiProvider
-from .domain_local.ollama_provider import OllamaProvider
 
 logger = logging.getLogger(__name__)
+
 
 class LLMFactory:
     @staticmethod
     def get_provider():
-        # Read config (Default to local to save credits)
-        mode = os.getenv("AI_ENGINE_MODE", "local_llama")
-        
-        logger.info(f"LLM Factory initializing mode: {mode}")
+        """
+        Returns the active LLM provider based on LLM_PROVIDER in .env.
+        """
+        provider = os.getenv("LLM_PROVIDER", "gemini").lower().strip()
 
-        if mode == "google_gemini":
-            return GoogleGeminiProvider()
-        elif mode == "local_llama" or mode == "local_mistral":
-            # flexible naming, both map to OllamaProvider default
-            return OllamaProvider(model_name="llama3.2")
+        if provider == "gemini":
+            from llm_engine.domain_gemini.gemini_provider import GeminiProvider
+            logger.info("LLMFactory: Using Gemini API (gemini-2.5-flash)")
+            return GeminiProvider()
+
+        elif provider == "ollama":
+            from llm_engine.domain_local.ollama_provider import OllamaProvider
+            model = os.getenv("OLLAMA_MODEL", "llama3.2")
+            logger.info(f"LLMFactory: Using Ollama ({model})")
+            return OllamaProvider(model=model)
+
+        elif provider == "qwen":
+            from llm_engine.domain_qwen.qwen_provider import QwenProvider
+            logger.info("LLMFactory: Using Qwen via OpenRouter")
+            return QwenProvider()
+
         else:
-            logger.warning(f"Unknown AI_ENGINE_MODE '{mode}', defaulting to Local Llama")
-            return OllamaProvider(model_name="llama3.2")
+            logger.warning(
+                f"LLMFactory: Unknown provider '{provider}', defaulting to Gemini"
+            )
+            from llm_engine.domain_gemini.gemini_provider import GeminiProvider
+            return GeminiProvider()

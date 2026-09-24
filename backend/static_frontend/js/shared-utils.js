@@ -13,30 +13,66 @@ class ParticlesBackground {
         
         this.ctx = this.canvas.getContext('2d');
         this.particles = [];
-        this.particleCount = 60;
+        this.particleCount = 80; // Increased for better coverage
+        this.programmingSymbols = ['{', '}', '(', ')', '[', ']', '<', '>', '/', '\\', ';', ':', '=', '+', '-', '*', '&', '|', '!', '?', '#', '$', '%', '@'];
         
         this.init();
     }
     
     init() {
         this.resize();
-        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('resize', () => {
+            this.resize();
+            this.redistributeParticles(); // Redistribute on resize
+        });
         
-        const programmingSymbols = ['{', '}', '(', ')', '[', ']', '<', '>', '/', '\\', ';', ':', '=', '+', '-', '*', '&', '|', '!', '?', '#', '$', '%', '@'];
+        this.createParticles();
+        this.animate();
+    }
+    
+    createParticles() {
+        this.particles = [];
+        
+        // Grid-based initialization for even distribution
+        const cols = Math.ceil(Math.sqrt(this.particleCount * (this.canvas.width / this.canvas.height)));
+        const rows = Math.ceil(this.particleCount / cols);
+        const cellWidth = this.canvas.width / cols;
+        const cellHeight = this.canvas.height / rows;
         
         for (let i = 0; i < this.particleCount; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            
+            // Random position within grid cell for natural look
+            const x = col * cellWidth + Math.random() * cellWidth;
+            const y = row * cellHeight + Math.random() * cellHeight;
+            
             this.particles.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                vx: (Math.random() - 0.5) * 0.2,
-                vy: (Math.random() - 0.5) * 0.2,
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 0.3,
+                vy: (Math.random() - 0.5) * 0.3,
                 size: Math.random() * 2 + 0.5,
-                opacity: Math.random() * 0.2 + 0.05,
-                symbol: programmingSymbols[Math.floor(Math.random() * programmingSymbols.length)]
+                opacity: Math.random() * 0.25 + 0.05,
+                symbol: this.programmingSymbols[Math.floor(Math.random() * this.programmingSymbols.length)]
             });
         }
+    }
+    
+    redistributeParticles() {
+        // Redistribute existing particles evenly when window resizes
+        const cols = Math.ceil(Math.sqrt(this.particles.length * (this.canvas.width / this.canvas.height)));
+        const rows = Math.ceil(this.particles.length / cols);
+        const cellWidth = this.canvas.width / cols;
+        const cellHeight = this.canvas.height / rows;
         
-        this.animate();
+        this.particles.forEach((particle, i) => {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            
+            particle.x = col * cellWidth + Math.random() * cellWidth;
+            particle.y = row * cellHeight + Math.random() * cellHeight;
+        });
     }
     
     resize() {

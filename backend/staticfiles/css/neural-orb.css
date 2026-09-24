@@ -1,0 +1,315 @@
+/**
+ * Neural Orb Visualizer - Centered AI Cognition Core
+ * ===================================================
+ * Premium holographic neural sphere with energy effects
+ * Integrates seamlessly with voice supervisor dark UI
+ */
+
+/* Main Container - Centered positioning */
+.neural-orb-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(30vw, 400px);
+    height: min(30vw, 400px);
+    z-index: 5; /* Between background (1) and UI (10) */
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeInOrb 1s ease-out 0.5s forwards;
+}
+
+@keyframes fadeInOrb {
+    to { opacity: 1; }
+}
+
+/* Core Neural Sphere */
+.neural-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, 
+        rgba(0, 242, 255, 0.9) 0%,
+        rgba(0, 212, 255, 0.7) 20%,
+        rgba(85, 106, 255, 0.6) 40%,
+        rgba(170, 0, 255, 0.5) 60%,
+        transparent 80%
+    );
+    box-shadow: 
+        0 0 40px rgba(0, 242, 255, 0.6),
+        0 0 80px rgba(0, 242, 255, 0.4),
+        0 0 120px rgba(170, 0, 255, 0.3),
+        inset 0 0 30px rgba(255, 255, 255, 0.15),
+        inset -10px -10px 40px rgba(0, 242, 255, 0.2);
+    animation: neuralPulse 3s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes neuralPulse {
+    0%, 100% { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.85;
+        filter: brightness(1);
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.08);
+        opacity: 1;
+        filter: brightness(1.2);
+    }
+}
+
+/* Inner Glow Layer */
+.neural-core::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    width: 40%;
+    height: 40%;
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(0, 242, 255, 0.4) 40%,
+        transparent 70%
+    );
+    filter: blur(8px);
+    animation: innerGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes innerGlow {
+    from { opacity: 0.6; transform: scale(1); }
+    to { opacity: 0.9; transform: scale(1.1); }
+}
+
+/* Energy Spikes Container */
+.energy-spikes {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+}
+
+/* Individual Energy Spike */
+.energy-spike {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 45%;
+    background: linear-gradient(to top,
+        transparent 0%,
+        rgba(255, 0, 85, 0.6) 20%,
+        rgba(0, 242, 255, 0.4) 100%
+    );
+    transform-origin: bottom center;
+    opacity: 0;
+    animation: spikeFlash 4s ease-in-out infinite;
+    filter: blur(1px);
+}
+
+/* Stagger spike animations */
+.energy-spike:nth-child(1) { transform: translate(-50%, -100%) rotate(0deg); animation-delay: 0s; }
+.energy-spike:nth-child(2) { transform: translate(-50%, -100%) rotate(45deg); animation-delay: 0.5s; }
+.energy-spike:nth-child(3) { transform: translate(-50%, -100%) rotate(90deg); animation-delay: 1s; }
+.energy-spike:nth-child(4) { transform: translate(-50%, -100%) rotate(135deg); animation-delay: 1.5s; }
+.energy-spike:nth-child(5) { transform: translate(-50%, -100%) rotate(180deg); animation-delay: 2s; }
+.energy-spike:nth-child(6) { transform: translate(-50%, -100%) rotate(225deg); animation-delay: 2.5s; }
+.energy-spike:nth-child(7) { transform: translate(-50%, -100%) rotate(270deg); animation-delay: 3s; }
+.energy-spike:nth-child(8) { transform: translate(-50%, -100%) rotate(315deg); animation-delay: 3.5s; }
+
+@keyframes spikeFlash {
+    0%, 100% { opacity: 0; height: 45%; }
+    10% { opacity: 0.8; height: 55%; }
+    20% { opacity: 0; height: 45%; }
+}
+
+/* Particle Halo */
+.particle-halo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+}
+
+/* Individual Particle */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        rgba(0, 242, 255, 1) 0%,
+        rgba(0, 242, 255, 0.6) 50%,
+        transparent 100%
+    );
+    box-shadow: 0 0 8px rgba(0, 242, 255, 0.8);
+    animation: particleOrbit 8s linear infinite;
+    will-change: transform;
+}
+
+/* Particle orbit variations */
+.particle:nth-child(odd) { animation-duration: 10s; }
+.particle:nth-child(even) { animation-duration: 12s; }
+.particle:nth-child(3n) { 
+    background: radial-gradient(circle, 
+        rgba(170, 0, 255, 1) 0%,
+        rgba(170, 0, 255, 0.6) 50%,
+        transparent 100%
+    );
+    box-shadow: 0 0 8px rgba(170, 0, 255, 0.8);
+}
+
+@keyframes particleOrbit {
+    from { transform: rotate(0deg) translateX(150px) rotate(0deg); }
+    to { transform: rotate(360deg) translateX(150px) rotate(-360deg); }
+}
+
+/* Neural Wave Rings */
+.neural-waves {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+}
+
+.neural-wave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(0, 242, 255, 0.4);
+    border-radius: 50%;
+    animation: waveRipple 3s ease-out infinite;
+}
+
+.neural-wave:nth-child(1) { animation-delay: 0s; }
+.neural-wave:nth-child(2) { animation-delay: 1s; }
+.neural-wave:nth-child(3) { animation-delay: 2s; }
+
+@keyframes waveRipple {
+    0% {
+        width: 60%;
+        height: 60%;
+        opacity: 0.8;
+        border-width: 2px;
+    }
+    100% {
+        width: 120%;
+        height: 120%;
+        opacity: 0;
+        border-width: 0px;
+    }
+}
+
+/* Volumetric Glow Layer */
+.volumetric-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(0, 242, 255, 0.15) 0%,
+        rgba(170, 0, 255, 0.1) 50%,
+        transparent 70%
+    );
+    filter: blur(30px);
+    animation: glowPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+    from { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    to { opacity: 0.8; transform: translate(-50%, -50%) scale(1.15); }
+}
+
+/* State Modifiers */
+.neural-orb-container.state-thinking .neural-core {
+    background: radial-gradient(circle at 30% 30%, 
+        rgba(170, 0, 255, 0.9) 0%,
+        rgba(138, 43, 226, 0.7) 30%,
+        rgba(75, 0, 130, 0.5) 60%,
+        transparent 80%
+    );
+    box-shadow: 
+        0 0 50px rgba(170, 0, 255, 0.7),
+        0 0 100px rgba(170, 0, 255, 0.5),
+        inset 0 0 40px rgba(255, 255, 255, 0.2);
+    animation: neuralPulse 1.5s ease-in-out infinite;
+}
+
+.neural-orb-container.state-happy .neural-core {
+    background: radial-gradient(circle at 30% 30%, 
+        rgba(0, 255, 136, 0.9) 0%,
+        rgba(0, 212, 255, 0.7) 40%,
+        rgba(0, 170, 255, 0.5) 60%,
+        transparent 80%
+    );
+    box-shadow: 
+        0 0 45px rgba(0, 255, 136, 0.6),
+        0 0 90px rgba(0, 255, 136, 0.4),
+        inset 0 0 35px rgba(255, 255, 255, 0.2);
+}
+
+.neural-orb-container.state-alert .neural-core {
+    background: radial-gradient(circle at 30% 30%, 
+        rgba(255, 0, 85, 0.9) 0%,
+        rgba(255, 50, 100, 0.7) 30%,
+        rgba(200, 0, 70, 0.5) 60%,
+        transparent 80%
+    );
+    box-shadow: 
+        0 0 50px rgba(255, 0, 85, 0.7),
+        0 0 100px rgba(255, 0, 85, 0.5),
+        inset 0 0 40px rgba(255, 255, 255, 0.2);
+    animation: neuralPulse 1s ease-in-out infinite;
+}
+
+.neural-orb-container.state-alert .energy-spike {
+    animation: spikeFlash 1s ease-in-out infinite;
+    background: linear-gradient(to top,
+        transparent 0%,
+        rgba(255, 0, 85, 0.8) 20%,
+        rgba(255, 50, 100, 0.6) 100%
+    );
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .neural-orb-container {
+        width: min(50vw, 250px);
+        height: min(50vw, 250px);
+    }
+    
+    .particle {
+        width: 3px;
+        height: 3px;
+    }
+    
+    @keyframes particleOrbit {
+        from { transform: rotate(0deg) translateX(100px) rotate(0deg); }
+        to { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
+    }
+}
+
+@media (max-width: 480px) {
+    .neural-orb-container {
+        width: min(60vw, 200px);
+        height: min(60vw, 200px);
+    }
+    
+    .energy-spike {
+        display: none; /* Reduce complexity on mobile */
+    }
+}

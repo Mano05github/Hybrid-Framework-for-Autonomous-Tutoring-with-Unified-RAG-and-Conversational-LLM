@@ -4,70 +4,114 @@ import operator
 
 class AgentState(TypedDict):
     """
-    Enhanced Shared Memory for Agent Swarm V2.0
-    
-    Tracks conversation state, routing decisions, and performance metrics.
-    Compatible with voice-first interaction where 'messages' are STT transcripts.
+    Shared Memory for Agent Swarm V3.0
+
+    Covers: routing, teaching, RAG, canvas, Socratic mode, empath, visionary,
+    examiner, SIP mastery, session phases, and v3 render-mode switching.
     """
-    # Core fields
+    # ── Core ────────────────────────────────────────────────────────────────
     messages: Annotated[List[BaseMessage], operator.add]
-    user_id: str                    # User identifier
-    session_id: str                 # Conversation session ID
-    query: str                      # Current user query
-    
-    # Routing fields (V2.0 enhancements)
-    intent: str                     # Predicted intent (teacher, coder, examiner, visionary, empath)
-    confidence: float               # Classification confidence (0.0-1.0)
-    method: str                     # Routing method (cache, setfit, llm)
-    latency_ms: float              # Routing latency in milliseconds
-    complexity_score: Optional[int] # Query complexity (0-100)
-    
-    # Context fields
-    user_emotion: str              # From Empath Agent (e.g., "Frustrated", "Joyful")
-    current_topic: str             # Conversation topic (e.g., "Binary Search Trees")
-    next_step: str                 # Router decision (e.g., "teacher", "coder")
-    next_agent: Optional[str]      # Next agent to route to (None = end)
-    
-    # Response fields
-    response: str                   # Agent response
-    
-    # RAG fields (Omni-RAG integration)
-    rag_strategy: Optional[str]    # RAG strategy used (no_rag, single_hop, multi_hop, iterative)
-    rag_confidence: Optional[float] # RAG retrieval confidence (0.0-1.0)
-    sources: Optional[List[str]]   # Retrieved document sources
-    teacher_latency_ms: Optional[float]  # Teacher agent total latency
-    
-    # Mastery tracking
-    mastery_state: Optional[dict]  # Student mastery levels from Analyst
-    
-    # Error handling
-    error: Optional[str]           # Error message if any
-    
-    # === Gap 3: Socratic Coder Agent Fields ===
-    code_context: Optional[Dict[str, Any]]  # Code submission context {code, problem_id, time_spent}
-    hint_level: Optional[int]      # Hint level delivered (1-5)
-    error_type: Optional[str]      # Error type detected (syntax, logic, approach)
-    struggle_score: Optional[float] # Struggle score (0.0-1.0)
-    
-    # === Gap 4: Adaptive Empath Agent Fields ===
-    emotion_valence: Optional[float]  # Emotion valence (-1.0 to +1.0)
-    emotion_intensity: Optional[str]  # Emotion intensity (mild, moderate, strong)
-    intervention_type: Optional[str]  # Intervention type applied
-    pause_duration: Optional[float]   # Pause duration in seconds
-    
-    # === Gap 5: Always-On Visionary Agent Fields ===
-    performance_trend: Optional[str]  # Performance trajectory (improving, stable, declining)
-    pattern_detected: Optional[Dict[str, Any]]  # Recurring pattern info {type, occurrences, action}
-    alert_triggered: Optional[str]    # Alert type if anomaly detected
-    forecast_insight: Optional[str]   # Strategic forecast message
-    triple_check_mode: Optional[bool] # Whether Triple-Check coordination is active
-    visionary_recommendation: Optional[str]  # Strategic recommendation from Visionary
-    
-    # === Gap 4: Adaptive Empath Agent Fields ===
-    emotion_valence: Optional[float] # Emotion valence (-1.0 to +1.0)
-    emotion_intensity: Optional[str] # Emotion intensity (mild, moderate, strong)
-    intervention_type: Optional[str] # Intervention type (pacing, visualization, branching)
-    
-    # Voice specifics (optional)
-    # user_audio_path: str          # Path to latest user audio (optional, handled by Empath)
+    user_id: str
+    session_id: str
+    query: str
+
+    # ── Routing ─────────────────────────────────────────────────────────────
+    intent: str                          # teacher | coder | examiner | visionary | empath | general
+    confidence: float                    # 0.0 – 1.0
+    method: str                          # instant_keyword | cache | setfit | llm
+    latency_ms: float
+    complexity_score: Optional[int]      # 0 – 100
+
+    # ── Context ─────────────────────────────────────────────────────────────
+    user_emotion: str
+    current_topic: str
+    current_topic_id: Optional[str]      # numeric topic pk as string for RAG
+    next_step: str
+    next_agent: Optional[str]
+    context: Optional[str]               # arbitrary context string
+
+    # ── Response ────────────────────────────────────────────────────────────
+    response: str
+    teaching_script: Optional[List[Dict[str, Any]]]
+    canvas_mode: Optional[bool]          # legacy flag; prefer render_mode
+    canvas_commands: Optional[List[Dict[str, Any]]]  # beat list for frontend
+    primary_concept: Optional[str]       # extracted concept for visualization
+
+    # ── v3 Render Mode ──────────────────────────────────────────────────────
+    render_mode: Optional[str]           # "tree" | "canvas" | "default"
+    tree_data: Optional[Dict[str, Any]]  # hierarchical tree structure for Tree Mode
+
+    # ── Socratic Mode ───────────────────────────────────────────────────────
+    mode: Optional[str]                  # 'socratic_tutor'
+    topic: Optional[str]                 # topic slug e.g. 'binary_search'
+    canvas_snapshot: Optional[str]       # Base64 PNG of student canvas
+
+    # ── RAG ─────────────────────────────────────────────────────────────────
+    rag_strategy: Optional[str]
+    rag_confidence: Optional[float]
+    sources: Optional[List[str]]
+    teacher_latency_ms: Optional[float]
+    difficulty_bias: Optional[str]       # "struggling" | "confident" | None
+
+    # ── Performance latency breakdown ────────────────────────────────────────
+    phase1_latency_ms: Optional[float]
+    phase2_latency_ms: Optional[float]
+    phase3_latency_ms: Optional[float]
+    performance_metrics: Optional[Dict[str, Any]]
+
+    # ── Mastery / SIP ───────────────────────────────────────────────────────
+    mastery_state: Optional[dict]        # topic → score snapshot
+    consecutive_wrong_answers: Optional[int]   # for adaptive difficulty engine
+    session_phase: Optional[str]         # diagnostic|explanation|practice|adjustment|minitest
+    teaching_hint: Optional[str]         # phase-specific instruction injected into teacher prompt
+    intent_override: Optional[str]       # forces supervisor to route to specific agent (e.g. minitest → examiner)
+
+    # ── Examiner / Quiz ─────────────────────────────────────────────────────
+    quiz_data: Optional[Dict[str, Any]]  # structured quiz from ExaminerAgent
+
+    # ── Error ───────────────────────────────────────────────────────────────
+    error: Optional[str]
+
+    # ── Gap 3: Socratic Coder ───────────────────────────────────────────────
+    code_context: Optional[Dict[str, Any]]
+    hint_level: Optional[int]
+    error_type: Optional[str]
+    struggle_score: Optional[float]
+
+    # ── PBL (Problem-Based Learning) ─────────────────────────────────────────
+    pbl_session_id: Optional[str]        # UUID of the active PBLSession
+    pbl_concept_name: Optional[str]      # ConceptNode.topic.title
+    pbl_problem_title: Optional[str]
+    pbl_problem_statement: Optional[str]
+    pbl_difficulty: Optional[int]        # 1–5
+    pbl_attempt_count: Optional[int]
+    pbl_hint_count: Optional[int]
+    pbl_mastery_score: Optional[float]   # 0.0–1.0
+    pbl_current_code: Optional[str]      # latest code from canvas code block
+
+    # ── Socratic Intelligence ───────────────────────────────────────────────
+    canvas_state: Optional[Dict[str, Any]]  # structured {text_blocks, drawings, notes} — student-owned
+    struggle_type: Optional[str]            # reasoning|syntax_confusion|misconception|guessing|stuck|solved
+    student_strategy: Optional[str]         # guessing|trial_and_error|systematic_reasoning|stuck
+    time_since_last_action: Optional[float] # seconds since last student action (sent by frontend)
+
+    # ── Gap 4: Adaptive Empath ──────────────────────────────────────────────
+    emotion_valence: Optional[float]     # -1.0 to +1.0
+    emotion_intensity: Optional[str]     # mild | moderate | strong
+    intervention_type: Optional[str]     # pacing_adjustment | visualization | branching | encouragement | break_suggestion
+    pause_duration: Optional[float]      # seconds
+    emotion_context: Optional[str]       # coaching note written by empath for teacher
+
+    # ── Gap 5: Visionary ────────────────────────────────────────────────────
+    performance_trend: Optional[str]     # improving | stable | declining
+    pattern_detected: Optional[Dict[str, Any]]
+    alert_triggered: Optional[str]
+    forecast_insight: Optional[str]
+    triple_check_mode: Optional[bool]
+    visionary_recommendation: Optional[str]
+    recent_errors: Optional[int]
+    velocity_score: Optional[float]
+    mouse_events: Optional[int]
+    keypress_count: Optional[int]
+    activity_type: Optional[str]         # learning | coding | assessment
 

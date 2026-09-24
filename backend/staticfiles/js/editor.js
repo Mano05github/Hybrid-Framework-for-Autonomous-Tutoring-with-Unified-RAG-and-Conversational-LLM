@@ -27,6 +27,7 @@ print("Node created with value:", root.val)
         this.clearOutputBtn = document.getElementById('clearOutputBtn');
         this.outputContent = document.getElementById('outputContent');
         this.outputStatus = document.getElementById('outputStatus');
+        this.endSessionBtn = document.getElementById('endSessionBtn');
         
         this.init();
     }
@@ -49,6 +50,10 @@ print("Node created with value:", root.val)
         this.hintBtn.addEventListener('click', () => this.showHint());
         this.resetBtn.addEventListener('click', () => this.resetCode());
         this.clearOutputBtn.addEventListener('click', () => this.clearOutput());
+
+        if (this.endSessionBtn) {
+            this.endSessionBtn.addEventListener('click', () => this.endSessionAndReturn());
+        }
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -63,6 +68,32 @@ print("Node created with value:", root.val)
                 this.showHint();
             }
         });
+    }
+
+    async endSessionAndReturn() {
+        if (this.endSessionInProgress) return;
+
+        const confirmed = confirm('End this session and return to the Supervisor?');
+        if (!confirmed) return;
+
+        this.endSessionInProgress = true;
+        this.endSessionBtn.disabled = true;
+        this.endSessionBtn.textContent = 'Ending...';
+
+        try {
+            if (!this.sessionId) {
+                const activeSession = await window.apiClient.getActiveSession();
+                this.sessionId = activeSession.id || activeSession.session_id || null;
+            }
+
+            if (this.sessionId) {
+                await window.apiClient.endSession(this.sessionId);
+            }
+        } catch (error) {
+            console.error('Failed to end session:', error);
+        }
+
+        window.location.href = 'voice-supervisor.html';
     }
     
     initMonaco() {
